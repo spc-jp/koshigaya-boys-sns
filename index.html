@@ -3,20 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>越谷ボーイズ かんたん広報ノート（SNS投稿メーカー）</title>
+  <title>越谷ボーイズ かんたん広報ノート & 野球カードメーカー</title>
 
-  <!-- Favicon & スマホ「ホーム画面に追加」アイコン -->
-  <link rel="icon" type="image/png" href="./favicon.png">
-  <link rel="apple-touch-icon" href="./favicon.png">
-
-  <!-- OGPメタタグ（LINEやSNS共有時のプレビュー） -->
-  <meta property="og:title" content="越谷ボーイズ SNS投稿メーカー（かんたん広報ノート）">
-  <meta property="og:description" content="選ぶだけでInstagram＆Facebookの投稿文が完成！「考えるを、ひとりにしない」越谷ボーイズ広報支援ツール。">
+  <!-- OGP メタタグ -->
+  <meta property="og:title" content="越谷ボーイズ かんたん広報ノート & 野球カードメーカー">
+  <meta property="og:description" content="考えるを、ひとりにしない。選ぶだけで1分でSNS投稿文＆プロ野球チップス風カード画像が完成！">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://spc-jp.github.io/koshigaya-boys-sns/">
   <meta property="og:image" content="https://spc-jp.github.io/koshigaya-boys-sns/favicon.png">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:image" content="https://spc-jp.github.io/koshigaya-boys-sns/favicon.png">
+  <link rel="icon" type="image/png" href="https://spc-jp.github.io/koshigaya-boys-sns/favicon.png">
+  <link rel="apple-touch-icon" href="https://spc-jp.github.io/koshigaya-boys-sns/favicon.png">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -26,22 +22,23 @@
   <!-- Babel Standalone -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- 指定カラーと優しいフォント設定 -->
+  <!-- Google Fonts: スポーティなステンシル・Teko・日本語フォント -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Teko:wght@600;700&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind カスタムカラー設定 -->
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            brand: {
-              red: '#9B0709',       /* ベースメイン：深紅・伝統のクリムゾン */
-              redDark: '#750406',   /* ホバー・アクセント濃 */
-              redLight: '#B81316',
-              cream: '#F4EBE4',     /* サブアクセント：温かみのあるやさしいクリーム */
-              creamLight: '#FCF9F7',
-              creamDark: '#E8DBD1',
-              textMain: '#2C2223',  /* コントラストを高めつつ目に刺さらないチャコール */
-              textMuted: '#6E6263'
-            }
+            brandCrimson: '#9B0709', // チーム基本深紅
+            cardMain: '#BB5758',     // 野球カード用指定カラー
+            cardSub: '#F3E8E1',      // 生成りクリーム
+            cardDark: '#1A1415',     // カード引き締めダーク
+            bgBase: '#FAF7F5',       // 優しい背景色
+            appNavy: '#020562'       // ボーイズネイビーアクセント
           }
         }
       }
@@ -51,1004 +48,1215 @@
   <style>
     body {
       background-color: #FAF7F5;
-      color: #2C2223;
+      color: #1F1718;
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif;
       -webkit-tap-highlight-color: transparent;
+      line-height: 1.6;
+    }
+    .font-stencil {
+      font-family: 'Black Ops One', cursive;
+    }
+    .font-teko {
+      font-family: 'Teko', sans-serif;
+    }
+    input, select, textarea, button {
+      font-size: 16px !important; /* iOS自動ズーム防止 */
     }
     .fade-in {
       animation: fadeIn 0.25s ease-out;
     }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(5px); }
+      from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    /* スマホ入力で文字サイズ16px維持（iOS自動ズームを防止） */
-    input, textarea, select, button {
-      font-size: 16px;
+    /* 日本語の自然な改行調整 */
+    .keep-words {
+      word-break: keep-all;
+      overflow-wrap: break-word;
     }
   </style>
 </head>
-<body class="min-h-screen pb-28 sm:pb-12">
+<body class="min-h-screen pb-36 sm:pb-20">
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState, useRef, useEffect } = React;
 
-    const MASCOT_IMG_SRC = "./favicon.png";
-    const MASCOT_FALLBACK = "https://spc-jp.github.io/koshigaya-boys-sns/favicon.png";
+    const MASCOT_URL = "https://spc-jp.github.io/koshigaya-boys-sns/favicon.png";
 
-    // 行事の選択肢（お母さんたちの実体験・現場目線に沿った文面）
+    // 行事マスター（わかりやすいタイトルと説明）
     const EVENTS = [
       {
-        id: 'player_card',
-        title: '🌟 選手紹介・今週のキラリ選手',
-        badge: '出身学童チーム・憧れの先輩',
-        desc: '「〇〇少年野球の先輩がいる！」親近感と憧れを届ける',
-        emoji: '🌟',
-        templates: {
-          insta: `🌟【越谷ボーイズ 選手紹介 No.〇〇】\nグラウンドで輝く頼もしい先輩たちをご紹介します！⚾️✨\n\n■ 選手名：〇〇 選手（中学〇年）\n■ 出身学童チーム：〇〇少年野球\n■ ポジション：〇〇\n■ 得意なプレー・目標：〇〇\n\n💬【小学生（後輩たち）へのメッセージ】\n「僕も小6の秋は硬式球にビビってたけど、すぐ慣れたよ！最初はみんな未経験だから大丈夫。ぜひ一緒にキャッチボールしよう！」\n\n技術はもちろん、大きな挨拶や道具の整理整頓（凡事徹底）でも後輩たちのお手本となってくれています🎒👟`,
-          facebook: `【選手紹介：次世代を担う越谷ボーイズの球児たち】\n\n日頃より越谷ボーイズ（NPO法人 越谷K・クラブ）への温かいご声援をいただき、誠にありがとうございます。\n\n本日は、チームの牽引役として日々の鍛錬に励む選手をご紹介いたします。\n\n■ 選手名：〇〇 選手（第〇期生／中学〇年）\n■ 出身学童チーム：〇〇少年野球\n■ 守備位置：〇〇\n■ 今季の目標：〇〇\n\n地域の学童野球チームで培った基礎を胸に、中学硬式の舞台でも「凡事徹底」の姿勢を崩さず、真摯に白球を追っています。\n後輩たちにとっても頼れる良き兄貴分として、技術面・人間面ともに成長を続けております。引き続き温かい応援をよろしくお願いいたします。`
-        }
-      },
-      {
-        id: 'welcome_kids',
-        title: '🤝 学童チーム歓迎・体験御礼',
-        badge: '地域交流・見学会',
-        desc: '「今日は〇〇少年野球さんが来てくれました！」',
-        emoji: '🤝',
-        templates: {
-          insta: `⚾️【見学・体験に来てくれてありがとう！】✨\n本日は、〇〇少年野球の選手・保護者の皆様が越谷ボーイズのグラウンドへ見学・体験に来てくださいました！🙌\n\n小学生の皆さんのキラキラした笑顔と元気な声に、迎えた選手たちも自然と笑顔になり、いつも以上に気合の入ったプレーを見せてくれました🔥\n「硬式ボールって重いけど楽しい！」「先輩が優しかった！」と言ってもらえて、選手たちも大喜びです😊\n\nまたいつでも遊びに来てくださいね！本日はありがとうございました！`,
-          facebook: `【学童野球チーム体験受け入れのご報告と御礼】\n\n本日、越谷ボーイズのホームグラウンドにおきまして、〇〇少年野球の選手ならびに指導者・保護者の皆様をお迎えし、体験練習会・合同見学会を実施いたしました。\n\n基礎ウォーミングアップやキャッチボール、トスバッティングなどを通じて、中学硬式野球の楽しさと確かな基礎技術を肌で体感していただきました。\n元気いっぱいに白球を追う学童球児のひたむきな姿に、当チームの在団生にとっても初心を思い出す大変刺激的で温かい一日となりました。\n\nご来場いただきました〇〇少年野球の皆様、誠にありがとうございました。チーム一同、再会を心より楽しみにしております。`
-        }
-      },
-      {
-        id: 'schedule_day',
-        title: '⏰ 越谷ボーイズのある週末の1日',
-        badge: '生活リズム・安心の当番体制',
-        desc: '「土日の拘束時間は？お茶当番は？」不安を解消する1日',
-        emoji: '⏰',
-        templates: {
-          insta: `⚾️【越谷ボーイズのある週末の1日ってどんな感じ？】☀️\n「中学クラブチームって、土日は朝から晩まで大変そう…」\nそんな保護者の方の不安にお答えして、普段の練習スケジュールをご紹介します！\n\n⏰ 8:30 集合・元気な挨拶（凡事徹底）\n⏰ 9:00 ウォーミングアップ・怪我予防の基礎ドリル\n⏰ 10:00 キャッチボール・守備＆打撃基礎練習\n⏰ 12:00 お昼休み（お弁当タイム・仲間とリラックス🍱）\n⏰ 13:00 実戦形式ノック・走塁練習\n⏰ 16:30 グランド整備・道具磨き・解散！\n\nお茶当番も無理のない持ち回りで、共働きのご家庭も支え合っています😊 勉強と両立しながら思いきり野球を楽しめる環境です！`,
-          facebook: `【チームの日常：週末の活動タイムスケジュールと育成環境】\n\n中学進学にあたり、硬式野球クラブチームでの活動イメージ（学業との両立や家庭の負担）について多くのお問い合わせをいただきます。当チームの標準的な練習日の流れをご案内いたします。\n\n■ 08:30　集合・健康状態確認・元気な挨拶\n■ 09:00　メディカル視点を取り入れたウォーミングアップ・障害予防ストレッチ\n■ 10:00　個別技術指導・基礎反復練習（球数管理の徹底）\n■ 12:00　昼食・栄養補給・コミュニケーション\n■ 13:00　シートノック・状況判断実戦練習\n■ 16:30　グランド整備・用具手入れ・礼節の徹底・解散\n\n過度な長時間拘束を避け、選手自身の自主学習時間や家族との時間を確保できるよう配慮しております。保護者のサポート体制についても、できる人が無理なく支え合う体制を整えております。`
-        }
+        id: 'player',
+        title: '🌟 今週のキラリ選手紹介',
+        badge: '一番人気！',
+        desc: '写真1枚でプロ野球カード画像＆紹介文を同時に作成できます',
+        isSpecial: true
       },
       {
         id: 'experience',
-        title: '体験練習会・見学',
-        badge: '小学6年生・保護者向け',
-        desc: '不安を解消！手ぶら・見学だけでも大歓迎',
-        emoji: '⚾️',
-        templates: {
-          insta: `⚾️【体験練習会 開催のおしらせ】\n中学野球の準備、越谷ボーイズでスタートしませんか？✨\n\n「硬式野球ってボールが硬くて危なくないかしら…？」\n「中学校の部活動とクラブチーム、どう違うの？」\nそんな不安や疑問をお持ちの小学6年生・保護者の皆様、ぜひ一度グランドへ見学にいらしてください😊\n\n見学のみ・午前中だけの参加でも大丈夫です！道具の貸出もありますので、手ぶらでお気軽にお越しくださいね👌 先輩選手や指導陣が笑顔でお待ちしています！`,
-          facebook: `【小学生・保護者の皆様へ：体験練習会のご案内】\n\n越谷ボーイズ（NPO法人 越谷K・クラブ）では、新入団員（現小学6年生・新中学1年生）向けの体験練習会・見学会を随時開催しております。\n\n当チームでは、高校野球へつながる確かな基礎技術の指導はもちろん、挨拶や道具の整理整頓といった「凡事徹底」の人間育成を何よりも大切に活動しています。\n\n「硬式野球へのステップアップを肌で感じてみたい」「チームの温かい雰囲気を確かめたい」など、どうぞお気軽にご参加ください。スタッフ・在団生一同、心よりお待ちしております。`
-        }
+        title: '⚾️ 体験練習会・見学のご案内',
+        badge: '新入団・小6向け',
+        desc: '手ぶらOK・道具貸出あり・温かく迎える安心メッセージ',
+        isSpecial: false
+      },
+      {
+        id: 'welcome_team',
+        title: '🤝 学童チーム歓迎・体験の御礼',
+        badge: '地域との絆',
+        desc: '見学に来てくれた少年野球チームへの温かい感謝メッセージ',
+        isSpecial: false
       },
       {
         id: 'tournament',
-        title: '公式戦・大会の試合結果',
-        badge: '試合速報・がんばり報告',
-        desc: 'ドキドキの熱戦！子どもたちの全力プレー',
-        emoji: '🏆',
-        templates: {
-          insta: `🏆【公式戦結果】熱戦！全員野球で戦い抜きました⚾️✨\n本日行われた公式戦の結果をお知らせします！\n\n緊迫した場面が続きましたが、ベンチもスタンドも心をひとつにして、最後まで声を掛け合いました🔥\nユニフォームを泥だらけにして滑り込む姿、仲間とハイタッチする笑顔…一戦ごとに子どもたちのたくましい成長を感じます😭✨\n\n朝早くからお弁当の準備や温かい応援を送ってくださった皆様、本当にありがとうございました！次も全力疾走で顔晴（がんば）ります！👊`,
-          facebook: `【公式戦 試合結果のご報告】\n\n本日行われました公式戦の試合結果をご報告いたします。\n\n■ 対戦カード：越谷ボーイズ vs 〇〇ボーイズ\n■ 会場：〇〇球場\n■ 結果：越谷ボーイズ 〇 - 〇 相手チーム\n\n選手たちは日頃の練習の成果を発揮し、ベンチとグラウンドが一丸となった粘り強い好ゲームを展開いたしました。勝敗の先にある課題にも真摯に向き合い、次戦へ向けてさらなる成長を目指してまいります。\n\n大会関係者の皆様、対戦いただいたチームの皆様、そして温かいご声援を送り続けてくださる保護者・関係者の皆様に心より御礼申し上げます。`
-        }
+        title: '🏆 大会・公式戦の試合結果',
+        badge: '試合速報',
+        desc: '粘りの好ゲーム・全員野球の熱いドラマと応援への御礼',
+        isSpecial: false
+      },
+      {
+        id: 'daily_schedule',
+        title: '⏰ 越谷ボーイズのある週末の1日',
+        badge: 'お母さん安心',
+        desc: '土日の時間割やお茶当番の負担軽減を伝えて不安を解消',
+        isSpecial: false
       },
       {
         id: 'practice',
-        title: 'いつもの練習風景（凡事徹底）',
-        badge: '日々の成長・道具磨き',
-        desc: '元気な挨拶・靴ならべ・仲間の絆',
-        emoji: '👟',
-        templates: {
-          insta: `⚾️【元気な声が響くグラウンドから】✨\n越谷ボーイズの練習日は、今日も気持ちの良い挨拶と全力疾走からスタート！\n\n「道具を大切に磨く」「ベンチの荷物をきれいに並べる」\n技術の上達と同じくらい、仲間や道具への感謝の気持ちを大切にしています🎒👟\nこうした当たり前の積み重ねが、ここぞという時のチームワークにつながります！今週末もみんなで元気に顔晴ります😊💪`,
-          facebook: `【普段の練習風景より：『凡事徹底』の精神】\n\n越谷ボーイズ（NPO法人 越谷K・クラブ）では、週末の通常練習においても「当たり前のことを、人並み外れて徹底して行う（凡事徹底）」を指導方針の柱に据えています。\n\n大きな声での挨拶、脱いだ靴やグラブ・バットの整頓、グランド整備への真摯な姿勢。高校野球、そしてその先の社会に出ても通用する人間力を育てることこそが、中学硬式野球における私たちの使命です。\n\n選手たちは泥だらけになりながら、確かな一歩を毎日積み重ねております。`
-        }
-      },
-      {
-        id: 'ground_opening',
-        title: 'グランド開き・安全祈願',
-        badge: '年の初め・安全祈願',
-        desc: '怪我なく元気に！今年一年の決意',
-        emoji: '🎍',
-        templates: {
-          insta: `🎍【新年の誓い！グランド開き】✨\nあけましておめでとうございます！\nいよいよ越谷ボーイズの新シーズンが元気に動き出しました⚾️🔥\n\n選手・指導者・保護者みんなで今年一年の安全を祈願し、いつもお世話になっているグランドをお清めしました。「今年も怪我なく、仲間を信じて全員野球！」と気持ちを新たに引き締めました。\n\n本年も越谷ボーイズへの温かいご声援をよろしくお願いいたします！🙌`,
-          facebook: `【新春グランド開き・安全祈願祭のご報告】\n\n謹んで新春のお慶びを申し上げます。\n越谷ボーイズ（NPO法人 越谷K・クラブ）は、ホームグランドにて関係者一同参列のもと、新年のグランド開きおよび安全祈願祭を厳粛に執り行いました。\n\n今シーズンも選手一人ひとりが怪我なく健康に白球を追えること、そして地域や高校野球界へ誇れる野球人へと成長できるよう、スタッフ・父母会一丸となって活動に邁進してまいります。\nOB・OGの皆様、地域の皆様、本年も変わらぬご指導・ご鞭撻のほどよろしくお願い申し上げます。`
-        }
-      },
-      {
-        id: 'seminar',
-        title: '野球教室・体験セミナー',
-        badge: '地域交流・小学生向け',
-        desc: 'ちびっ子球児へ優しく指導・笑顔いっぱい',
-        emoji: '🧢',
-        templates: {
-          insta: `🧢【ちびっこ集まれ！野球教室を開催しました】\n地域の学童野球チームの皆さんをお招きして、楽しい野球教室を開催しました！⚾️✨\n\n最初はちょっぴり緊張していた小学生たちも、お兄ちゃん選手たちと一緒にキャッチボールをするうちに笑顔いっぱいに😆🎶\n選手たちにとっても「優しく教えること」を通じて大切な基本を再確認できた、とても温かい一日になりました！\n\n参加してくださった皆様、ありがとうございました！`,
-          facebook: `【地域貢献事業：小学生野球セミナー開催報告】\n\nNPO法人 越谷K・クラブ（越谷ボーイズ）では、地域スポーツ振興の一環として、近隣の少年野球チームを対象とした野球教室・技術講習会を開催いたしました。\n\nウォーミングアップから送球の基本姿勢、安全なスライディング技術などを指導させていただきました。参加した学童球児のひたむきな眼差しに触れ、当チームの在団生にとっても自らの基本を再認識する大変有意義な機会となりました。\n\n今後とも越谷の地から野球文化の発展と子どもたちの健全育成に寄与してまいります。ご協力いただいた各チーム関係者の皆様に感謝申し上げます。`
-        }
+        title: '👟 普段の練習風景（凡事徹底）',
+        badge: 'チーム方針',
+        desc: '大きな挨拶・道具磨き・全力疾走・高校へつなぐ基礎指導',
+        isSpecial: false
       },
       {
         id: 'summer_camp',
-        title: '夏の強化合宿',
-        badge: '夏の思い出・限界突破',
-        desc: '朝のランニングから夜ご飯まで仲間と一緒！',
-        emoji: '☀️',
-        templates: {
-          insta: `☀️【夏合宿！みんなで乗り越えた絆の夏】🔥\n暑さに負けず、越谷ボーイズの夏季強化合宿を無事に走り切りました！⚾️\n\n朝練から夕方までの厳しいノック、夜のミーティング、そしてみんなで食べる山盛りのご飯🍚✨\n苦しい練習も仲間と声を掛け合って乗り越えた子どもたちの表情は、出発前よりグッとたくましくなりました！\n\n食事や体調をサポートしてくださった皆様、本当にありがとうございました！秋の大会も顔晴ります！💪`,
-          facebook: `【夏季強化合宿 終了のご報告】\n\n越谷ボーイズ夏季強化合宿が無事全日程を終了いたしました。\n\n本合宿では「自立と協調」をテーマに掲げ、技術的な反復練習のみならず、共同生活を通じた自己管理・感謝の心を徹底して養いました。選手たちは厳しいメニューを全員の気迫で乗り越え、チームとして確固たる結束力を確立いたしました。\n\n現地まで帯同し手厚い体調管理・食事サポートを担っていただいた保護者の皆様、ならびに宿舎関係者の皆様の温かいご支援に、心より厚く御礼申し上げます。`
-        }
+        title: '☀️ 夏季強化合宿のご報告',
+        badge: '絆・成長',
+        desc: '早朝練習から夜のミーティング・仲間と乗り越えた団結力',
+        isSpecial: false
       },
       {
         id: 'parents',
-        title: '保護者サポート・総会',
-        badge: 'お母さん・お父さんの輪',
-        desc: '無理のない当番制・笑顔で支える応援団',
-        emoji: '🤝',
-        templates: {
-          insta: `🤝【子どもたちの笑顔を支える応援団！】✨\nいつも選手たちが思いきり野球に打ち込めるよう、温かく見守り支えてくれる保護者の皆様、本当にお疲れ様です＆ありがとうございます！\n\n越谷ボーイズでは、保護者の当番負担をできるだけ減らし、家庭のペースを大切にしながら笑顔で協力し合える環境づくりを進めています😊\nグラウンドに響くお父さん・お母さんの温かい声援が、子どもたちの一番の元気の源です！⚾️`,
-          facebook: `【父母会・総会開催のご報告と感謝】\n\n本日、越谷ボーイズ（NPO法人 越谷K・クラブ）の父母会・総会を開催いたしました。\n\n指導方針の共有や大会運営のサポート体制について建設的な意見交換が行われ、改めて指導者・保護者が「チームの両輪」となって選手たちの成長を支えていく体制を確認いたしました。\n近年の家庭環境に配慮し、効率的で無理のないサポート体制づくりを継続してまいります。子どもたちの夢を共に支えてくださる保護者の皆様の献身的なご尽力に、深く敬意と感謝を表します。`
-        }
+        title: '👨‍👩‍👦 父母会・サポート体制',
+        badge: '協力体制',
+        desc: '無理のない当番体制・指導者との連携・温かい応援の様子',
+        isSpecial: false
       }
     ];
 
-    // 目的・締めくくり（CTA）
+    // 目的・締めくくり（平易な言葉に翻訳）
     const CTAS = {
       experience: {
-        label: '体験練習に来てほしい',
-        sub: '「見学・体験いつでも大歓迎」の案内',
+        label: '体験練習に来てほしい（公式HPへ案内）',
+        sub: '「見学・体験はいつでも歓迎！」と結びます',
         icon: '📝',
-        instaText: '＼ 見学・体験練習はいつでも受付中です！ ／\n「ちょっと見てみたいだけ」でも大丈夫ですよ⚾️\n公式HPのお問い合わせフォーム、またはインスタのDMからお気軽にメッセージくださいね📩\n詳しくはプロフィールのリンク（@koshigaya_boys）をご覧ください✨',
-        fbText: '【体験練習・見学のお問い合わせ】\n越谷ボーイズでは、新入団員を随時募集しております。体験練習のご参加やご質問は、下記公式ホームページのお問い合わせフォームよりお気軽にご連絡ください。\n🔗 公式サイト：https://koshigaya-boys.com/'
+        insta: '＼ 体験練習・見学はいつでも大歓迎です！ ／\n公式HPのWebフォーム、またはDMよりお気軽にお問い合わせください📩\n詳細はプロフィールのリンク（@koshigaya_boys）からご覧いただけます⚾️✨',
+        fb: '【体験練習・見学のお問い合わせ】\n越谷ボーイズでは、新入団員（新中1・現小6）を随時募集しております。体験練習のご参加・ご質問は、下記公式ホームページのお問い合わせフォームよりお気軽にご連絡ください。\n🔗 公式サイト：https://koshigaya-boys.com/'
       },
       cheer: {
-        label: '子どもたちの頑張りを応援してほしい',
-        sub: '温かい「いいね！」やエールをお願い',
+        label: '子どもたちの頑張りを見てほしい（応援のお願い）',
+        sub: '「いいね！や温かいエール」をお願いします',
         icon: '📣',
-        instaText: 'ひたむきに白球を追う子どもたちへ、ぜひ温かい「いいね！」やコメントでエールを届けていただけると励みになります⚾️💬✨\nいつも応援ありがとうございます！',
-        fbText: '日頃より温かく見守ってくださる皆様の応援が、選手たちの最大の力となっております。引き続き越谷ボーイズへの温かいご声援をよろしくお願い申し上げます。'
+        insta: '選手たちのひたむきなプレーに、温かい「いいね！」やコメントでエールを届けていただけると大きな励みになります⚾️💬✨\nいつも応援ありがとうございます！',
+        fb: '日頃より温かく見守ってくださる皆様の応援が、選手たちの最大の力となっております。引き続き越谷ボーイズへの温かいご声援をよろしくお願い申し上げます。'
       },
       thanks: {
-        label: '感謝の気持ちを伝えたい',
-        sub: '大会役員・指導陣・保護者への御礼',
+        label: '感謝を伝えたい（指導者・保護者・大会関係者へ）',
+        sub: '「皆様の温かい支えに感謝します」と結びます',
         icon: '🙏',
-        instaText: 'いつも熱心にご指導いただく監督・コーチ、そして温かく支えてくださる保護者の皆様、地域の皆様に心から感謝いたします✨\nこれからも感謝の気持ちをプレーで恩返ししていきます！',
-        fbText: '大会を支えてくださる役員・審判員の皆様、日頃より惜しみない愛情を注いでくださる指導者・保護者の皆様に、改めて深く感謝申し上げます。'
+        insta: 'いつも温かく背中を押してくださる指導陣、保護者の皆様、そして地域の皆様に心から感謝いたします✨\nこれからも全員野球で恩返ししていきます！',
+        fb: '大会を支えてくださる役員・審判員の皆様、日頃より惜しみない愛情を注いでくださる指導者・保護者の皆様に、改めて深く感謝申し上げます。'
       },
       ob_report: {
-        label: 'OB・地域の方へ活動を報告したい',
-        sub: '伝統への感謝と近況報告',
+        label: 'OB・地域へ活動を報告したい（伝統の継承と信頼）',
+        sub: '「先輩方、いつでもグラウンドへ！」と結びます',
         icon: '🤝',
-        instaText: '越谷ボーイズの伝統をしっかり引き継ぎ、後輩たちも全力で前進しています！\nOB・OGの先輩方、いつでもグラウンドへ顔を見せに来てくださいね⚾️✨',
-        fbText: '越谷ボーイズの礎を築いてこられた歴代OB・OGの皆様、ならびに関係各位に謹んでご報告申し上げます。伝統の誇りを胸に、現役世代も全力で精進を続けてまいります。お近くにお越しの際は、ぜひグラウンドへお立ち寄りください。'
+        insta: '越谷ボーイズの伝統をしっかり引き継ぎ、後輩たちも全力で前進しています！OB・OGの先輩方、いつでもグランドへ遊びに来てください⚾️✨',
+        fb: '越谷ボーイズの礎を築いてこられた歴代OB・OGの皆様、ならびに関係各位に謹んでご報告申し上げます。伝統の誇りを胸に、現役世代も全力で精進を続けてまいります。'
       }
     };
 
     // ハッシュタグ
-    const HASHTAGS_INSTA = [
-      '#越谷ボーイズ', '#NPO法人越谷Kクラブ', '#中学硬式野球', '#ボーイズリーグ',
-      '#少年野球', '#凡事徹底', '#体験練習受付中', '#越谷市', '#部活かクラブチームか',
-      '#野球少年の母', '#高校野球へつなぐ'
-    ];
-    const HASHTAGS_FB = [
-      '#越谷ボーイズ', '#ボーイズリーグ', '#中学硬式野球', '#越谷Kクラブ', '#凡事徹底', '#青少年健全育成'
-    ];
+    const TAGS_INSTA = '#越谷ボーイズ #中学硬式野球 #ボーイズリーグ #凡事徹底 #少年野球 #体験練習受付中 #越谷市 #高校野球へつなぐ #野球好きな人と繋がりたい';
+    const TAGS_FB = '#越谷ボーイズ #ボーイズリーグ #中学硬式野球 #越谷Kクラブ #文武両道 #青少年健全育成';
 
-    // お母さん安心チェック
-    const CHECK_WORDS = [
-      { word: '絶対に勝つ', tip: '「全力で挑む」「一戦必勝」など前向きな言葉に変えると安心です' },
-      { word: '下手', tip: '「伸びしろがたくさん」「課題が見つかった」と書くと温かい印象になります' },
-      { word: 'ミスばかり', tip: '「次の練習で修正を重ね」「この経験を糧に」と表現してみましょう' },
-      { word: '相手のエラー', tip: '相手チームへの敬意のため、相手の失策への言及は控えましょう' }
+    // 安心チェック用
+    const NG_WORDS = [
+      { word: '絶対に勝つ', advice: '「全力で挑む」「一戦必勝で立ち向かう」等の前向きな言葉が好印象です' },
+      { word: '下手', advice: '「伸び代がある」「課題に真摯に向き合う」と言い換えると温かさが伝わります' },
+      { word: 'ミスばかり', advice: '「反省を次の糧に」「修正を重ねて」と表現すると前向きになります' },
+      { word: '相手のエラー', advice: '相手チームへの敬意を大切にするため、相手の失策への言及は控えましょう' }
     ];
 
     const App = () => {
-      const [eventId, setEventId] = useState('player_card');
-      const [format, setFormat] = useState('insta_feed'); // 'insta_feed', 'insta_reel', 'facebook'
+      // 選択ステート
+      const [eventId, setEventId] = useState('player');
+      const [format, setFormat] = useState('insta_feed');
       const [purpose, setPurpose] = useState('experience');
+      const [showGuide, setShowGuide] = useState(false);
+      const [showResetConfirm, setShowResetConfirm] = useState(false);
+      const [toastMsg, setToastMsg] = useState('');
+      const [copiedKey, setCopiedKey] = useState('');
+
+      // 選手カード専用ステート
+      const [cardTheme, setCardTheme] = useState('gold'); // 'gold' | 'navy' | 'classic'
+      const [number, setNumber] = useState('10');
+      const [nameJa, setNameJa] = useState('佐藤 颯太');
+      const [nameEn, setNameEn] = useState('SOUTA SATO');
+      const [position, setPosition] = useState('投手・外野手');
+      const [handedness, setHandedness] = useState('右投左打');
+      const [grade, setGrade] = useState('中学2年');
+      const [originTeam, setOriginTeam] = useState('越谷ライオンズ出身');
+      const [playerMessage, setPlayerMessage] = useState('僕も小6の秋は硬式球にドキドキしたけど、先輩たちが優しく教えてくれてすぐ慣れました！まずは気軽にキャッチボールしに来てください！');
+      
+      // 画像アップロード & Canvas
+      const [uploadedImgUrl, setUploadedImgUrl] = useState(null);
+      const [isCardSaving, setIsCardSaving] = useState(false);
+      const canvasRef = useRef(null);
+
+      // 自由入力・本文ステート
       const [customMemo, setCustomMemo] = useState('');
-      const [copied, setCopied] = useState(false);
-      const [showGuide, setShowGuide] = useState(false); // 目的と使い方の開閉
-      const [matchDetail, setMatchDetail] = useState({ stadium: '', opponent: '', myScore: '', opScore: '' });
-      const [showScoreInput, setShowScoreInput] = useState(false);
-      const [tipsDetected, setTipsDetected] = useState([]);
-      const [showResetToast, setShowResetToast] = useState(false);
 
-      // 選手カード・学童チーム向け専用入力ステート
-      const initialPlayerData = {
-        name: '山田 太郎',
-        grade: '中学2年',
-        originTeam: '越谷ライオンズ',
-        position: '投手・外野手',
-        goal: 'ピンチでも笑顔で投げ抜くこと！',
-        comment: '最初は硬式球が重く感じたけど、先輩が優しく教えてくれてすぐ慣れたよ！まずはキャッチボールしに来てね！'
-      };
-      const [playerData, setPlayerData] = useState(initialPlayerData);
-      const [visitingTeam, setVisitingTeam] = useState('');
-
-      // ヘッダー（ロゴ・タイトル）タップ時の初期化リセット関数
-      const handleResetAll = () => {
-        setEventId('player_card');
-        setFormat('insta_feed');
-        setPurpose('experience');
-        setPlayerData(initialPlayerData);
-        setVisitingTeam('');
-        setMatchDetail({ stadium: '', opponent: '', myScore: '', opScore: '' });
-        setShowScoreInput(false);
-        setShowGuide(false);
-        setShowResetToast(true);
-        setTimeout(() => setShowResetToast(false), 2200);
+      const showToast = (msg) => {
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(''), 2500);
       };
 
-      const currentEvent = EVENTS.find(e => e.id === eventId) || EVENTS[0];
-
-      // イベント変更時にテンプレートをセット
+      // 初回ダミー写真背景の生成
       useEffect(() => {
-        applyTemplate();
-      }, [eventId, format]);
+        const dummyCanvas = document.createElement('canvas');
+        dummyCanvas.width = 600;
+        dummyCanvas.height = 900;
+        const ctx = dummyCanvas.getContext('2d');
 
-      const applyTemplate = () => {
-        const isFb = format === 'facebook';
-        let base = isFb ? currentEvent.templates.facebook : currentEvent.templates.insta;
+        const grad = ctx.createLinearGradient(0, 0, 0, 900);
+        grad.addColorStop(0, '#506173');
+        grad.addColorStop(0.5, '#6F8498');
+        grad.addColorStop(1, '#344555');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 600, 900);
 
-        // 選手カードの場合の差し替え
-        if (eventId === 'player_card') {
-          base = base
-            .replace(/〇〇 選手/g, `${playerData.name} 選手`)
-            .replace(/中学〇年/g, playerData.grade)
-            .replace(/第〇期生/g, '第15期生')
-            .replace(/〇〇少年野球/g, playerData.originTeam || '学童チーム名')
-            .replace(/■ ポジション：〇〇/g, `■ ポジション：${playerData.position}`)
-            .replace(/■ 守備位置：〇〇/g, `■ 守備位置：${playerData.position}`)
-            .replace(/■ 得意なプレー・目標：〇〇/g, `■ 目標・得意なプレー：${playerData.goal}`)
-            .replace(/■ 今季の目標：〇〇/g, `■ 今季の目標：${playerData.goal}`)
-            .replace(/「僕も小6の秋は硬式球にビビってたけど.*キャッチボールしよう！」/g, `「${playerData.comment}」`);
-        }
+        ctx.fillStyle = 'rgba(243, 232, 225, 0.25)';
+        ctx.beginPath();
+        ctx.arc(300, 370, 140, 0, Math.PI * 2);
+        ctx.fill();
 
-        // 学童チーム歓迎の場合の差し替え
-        if (eventId === 'welcome_kids' && visitingTeam) {
-          base = base.replace(/〇〇少年野球/g, visitingTeam);
-        }
+        ctx.fillStyle = '#F3E8E1';
+        ctx.font = '900 32px "Noto Sans JP", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚾️ 選手の写真を選んでください', 300, 350);
 
-        setCustomMemo(base);
-      };
+        ctx.font = 'bold 22px "Noto Sans JP", sans-serif';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText('打撃・投球・ベンチの笑顔など', 300, 395);
+        ctx.font = '18px "Noto Sans JP", sans-serif';
+        ctx.fillStyle = 'rgba(243, 232, 225, 0.9)';
+        ctx.fillText('スマホで撮った縦向き写真がキレイに収まります', 300, 435);
 
-      const updatePlayerAndText = (key, val) => {
-        const updated = { ...playerData, [key]: val };
-        setPlayerData(updated);
-      };
+        setUploadedImgUrl(dummyCanvas.toDataURL());
+      }, []);
 
-      // 安心チェック
-      useEffect(() => {
-        const hits = [];
-        CHECK_WORDS.forEach(c => {
-          if (customMemo.includes(c.word)) {
-            hits.push(c);
+      // Canvasにカルビー風野球カードフレームを描画
+      const renderCard = () => {
+        if (!uploadedImgUrl) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = uploadedImgUrl;
+
+        img.onload = () => {
+          const W = 600;
+          const H = 900;
+          canvas.width = W;
+          canvas.height = H;
+
+          // テーマごとの配色定義
+          const THEME_COLORS = {
+            gold: {
+              main: '#9B0709',       // 越谷深紅
+              accent: '#E5C158',     // シャンパンゴールド
+              accentBorder: '#D4AF37',
+              badgeBg: '#E5C158',
+              badgeText: '#1A1415',
+              subText: '#FAF7F5',
+              darkBand: 'rgba(20, 14, 15, 0.95)',
+              titleBadge: '★ SPECIAL GOLD EDITION ★'
+            },
+            navy: {
+              main: '#020562',       // 侍ネイビー
+              accent: '#22AEC9',     // スポーティシアン
+              accentBorder: '#00E5FF',
+              badgeBg: '#FFFFFF',
+              badgeText: '#020562',
+              subText: '#FFFFFF',
+              darkBand: 'rgba(5, 8, 30, 0.95)',
+              titleBadge: '★ ATHLETE NAVY EDITION ★'
+            },
+            classic: {
+              main: '#BB5758',       // クラシックローズ
+              accent: '#F3E8E1',     // 生成りクリーム
+              accentBorder: '#FFFFFF',
+              badgeBg: '#F3E8E1',
+              badgeText: '#BB5758',
+              subText: '#F3E8E1',
+              darkBand: 'rgba(26, 20, 21, 0.95)',
+              titleBadge: '★ CLASSIC EDITION ★'
+            }
+          };
+
+          const theme = THEME_COLORS[cardTheme] || THEME_COLORS.gold;
+
+          // 1. 写真トリミング中央全画面フィット
+          const hRatio = W / img.width;
+          const vRatio = H / img.height;
+          const ratio = Math.max(hRatio, vRatio);
+          const shiftX = (W - img.width * ratio) / 2;
+          const shiftY = (H - img.height * ratio) / 2;
+          ctx.drawImage(img, 0, 0, img.width, img.height, shiftX, shiftY, img.width * ratio, img.height * ratio);
+
+          // 2. 左上：鋭角トライアングルバナー
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(290, 0);
+          ctx.lineTo(0, 195);
+          ctx.closePath();
+          ctx.fillStyle = theme.main;
+          ctx.fill();
+
+          // 左上ゴールド/アクセント装飾ダブルライン
+          ctx.beginPath();
+          ctx.moveTo(290, 0);
+          ctx.lineTo(304, 0);
+          ctx.lineTo(0, 205);
+          ctx.lineTo(0, 195);
+          ctx.closePath();
+          ctx.fillStyle = theme.accent;
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(304, 0);
+          ctx.lineTo(308, 0);
+          ctx.lineTo(0, 208);
+          ctx.lineTo(0, 205);
+          ctx.closePath();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fill();
+
+          // 左上ロゴテキスト & スター刻印
+          ctx.fillStyle = theme.subText;
+          ctx.font = '900 24px "Noto Sans JP", sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText('KOSHIGAYA', 24, 46);
+          ctx.font = 'bold 13px sans-serif';
+          ctx.letterSpacing = '2.5px';
+          ctx.fillText('BOYS BASEBALL CARD', 26, 68);
+
+          // 箔押し風刻印バッジ
+          ctx.fillStyle = theme.accent;
+          ctx.font = 'bold 12px sans-serif';
+          ctx.letterSpacing = '1px';
+          ctx.fillText(theme.titleBadge, 26, 92);
+          ctx.restore();
+
+          // 3. 下部：カルビー風多層シャープカッティングフレーム
+          const bottomBaseY = 620;
+
+          // (A) サブカラーライン
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(0, bottomBaseY - 20);
+          ctx.lineTo(W, bottomBaseY + 80);
+          ctx.lineTo(W, bottomBaseY + 95);
+          ctx.lineTo(0, bottomBaseY - 5);
+          ctx.closePath();
+          ctx.fillStyle = theme.accent;
+          ctx.fill();
+          ctx.restore();
+
+          // (B) メインカラー鋭角フレーム
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(0, bottomBaseY);
+          ctx.lineTo(W, bottomBaseY + 100);
+          ctx.lineTo(W, H);
+          ctx.lineTo(0, H);
+          ctx.closePath();
+          ctx.fillStyle = theme.main;
+          ctx.fill();
+          ctx.restore();
+
+          // (C) 引き締めダーク帯
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(0, bottomBaseY + 75);
+          ctx.lineTo(W, bottomBaseY + 128);
+          ctx.lineTo(W, H);
+          ctx.lineTo(0, H);
+          ctx.closePath();
+          ctx.fillStyle = theme.darkBand;
+          ctx.fill();
+          ctx.restore();
+
+          // 4. テキスト情報
+          ctx.save();
+          // 背番号（ゴールドまたは白でシャープに描画）
+          ctx.fillStyle = theme.accent;
+          ctx.font = '78px "Black Ops One", "Teko", sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(number || '00', 34, 765);
+
+          // チーム名ラベル
+          ctx.fillStyle = theme.subText;
+          ctx.font = 'bold 12px sans-serif';
+          ctx.letterSpacing = '2.5px';
+          ctx.fillText('TEAM KOSHIGAYA BOYS', 36, 788);
+
+          // 選手名（英字ステンシル）
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = 'bold 44px "Teko", sans-serif';
+          ctx.letterSpacing = '1.5px';
+          ctx.fillText((nameEn || 'PLAYER NAME').toUpperCase(), 36, 832);
+
+          // 選手名（漢字）
+          ctx.fillStyle = theme.accent;
+          ctx.font = '900 22px "Noto Sans JP", sans-serif';
+          ctx.fillText(nameJa || '', 36, 866);
+
+          // 学年・守備位置・投打（プロ名鑑スタイル）
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = 'bold 13px "Noto Sans JP", sans-serif';
+          const subInfo = [grade, position, handedness].filter(Boolean).join(' ｜ ');
+          if (subInfo) {
+            ctx.fillText(`[ ${subInfo} ]`, 185, 866);
           }
-        });
-        setTipsDetected(hits);
-      }, [customMemo]);
 
-      // 投稿文の組み立て
-      const generateText = (targetFmt) => {
-        const cta = CTAS[purpose];
-        const isFb = targetFmt === 'facebook';
-        const isReel = targetFmt === 'insta_reel';
+          // 5. 右下：出身学童チーム名バッジ（ゴールド額縁つき）
+          if (originTeam) {
+            const badgeW = 230;
+            const badgeH = 36;
+            const badgeX = W - badgeW - 20;
+            const badgeY = H - 54;
+
+            // 金フチ
+            ctx.fillStyle = theme.accent;
+            ctx.beginPath();
+            ctx.roundRect(badgeX - 2, badgeY - 2, badgeW + 4, badgeH + 4, 8);
+            ctx.fill();
+
+            // バッジ本体
+            ctx.fillStyle = theme.badgeBg;
+            ctx.beginPath();
+            ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 6);
+            ctx.fill();
+
+            // テキスト
+            ctx.fillStyle = theme.badgeText;
+            ctx.font = '900 13.5px "Noto Sans JP", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(originTeam, badgeX + (badgeW / 2), badgeY + 23);
+          }
+          ctx.restore();
+        };
+      };
+
+      useEffect(() => {
+        renderCard();
+        if (document.fonts) {
+          document.fonts.ready.then(() => renderCard());
+        }
+      }, [uploadedImgUrl, number, nameEn, nameJa, position, handedness, grade, originTeam, cardTheme, eventId]);
+
+      // 行事切り替え時に下書き本文を自動セット
+      useEffect(() => {
+        const isFb = format === 'facebook';
+
+        if (eventId === 'player') {
+          if (isFb) {
+            setCustomMemo(
+`【今週のキラリ選手紹介：背番号${number || '00'} ${nameJa || '選手'}】\n\n越谷ボーイズで日々成長を続ける選手をご紹介します。\n\n■ 選手名：${nameJa}（${nameEn}）\n■ 学年・守備位置：${grade} / ${position}（${handedness}）\n■ 出身学童野球チーム：${originTeam}\n\n【後輩・小学生へのメッセージ】\n「${playerMessage}」\n\n地道な基礎練習（凡事徹底）と道具を大切にする姿勢で、チームを力強く引っ張ってくれています。今後のさらなる飛躍にご期待ください！`
+            );
+          } else {
+            setCustomMemo(
+`🌟【今週のキラリ選手紹介！】⚾️✨\n越谷ボーイズの仲間を紹介します！\n\n📸 1枚目の限定選手カードもぜひ見てね！\n━━━━━━━━━━━━━━━\n■ 背番号：#${number || '00'}\n■ 選手名：${nameJa} 選手（${nameEn}）\n■ 学年・ポジション：${grade} / ${position}（${handedness}）\n■ 出身学童チーム：★${originTeam}★\n━━━━━━━━━━━━━━━\n\n🗣 選手から小学生の後輩たちへ一言！\n「${playerMessage}」\n\nグラウンドでの元気な声と、道具をピカピカに磨く姿が光っています👟✨\n先輩の背中を追って、ぜひグラウンドへ気軽に遊びに来てくださいね！🙌`
+            );
+          }
+        } else if (eventId === 'experience') {
+          setCustomMemo(
+            isFb
+              ? `【小学生・保護者の皆様へ：体験練習会のご案内】\n\n越谷ボーイズ（NPO法人 越谷K・クラブ）では、新入団員（新中1・現小6）向けの体験練習会・見学会を随時開催しております。\n\n高校野球へつながる確かな基礎指導はもちろん、挨拶や道具の整理整頓といった「凡事徹底」の人間育成を何よりも大切にしています。\n「硬式野球へのステップアップを肌で感じてみたい」「チームの温かい雰囲気を確かめたい」など、どうぞお気軽にご参加ください。スタッフ・在団生一同、心よりお待ちしております。`
+              : `⚾️【体験練習会 開催のおしらせ】✨\n中学野球の準備、越谷ボーイズでスタートしませんか？\n\n「硬式球って怖くないかな？」「部活とクラブチーム、どっちがいい？」\nそんな不安や疑問をお持ちの小学6年生・保護者の皆様、ぜひ一度越谷ボーイズのグラウンドへお越しください！\n\n見学のみ・午前中だけの参加も大歓迎。グローブ貸出ありますので手ぶらでもOKです👌 先輩選手や指導陣が笑顔で温かく迎えます！`
+          );
+        } else if (eventId === 'welcome_team') {
+          setCustomMemo(
+            isFb
+              ? `【学童野球チームの皆様へ：体験見学の御礼】\n\n本日は、〇〇少年野球チームの皆様が越谷ボーイズの体験練習へご参加くださいました。\n\n白球をひたむきに追う元気いっぱいのプレーと明るい笑顔に、当チームの選手・指導陣一同、大きな刺激と元気をいただきました。\n今後とも地域の学童野球チームの皆様との温かい交流を深め、子どもたちの健全な野球環境づくりに貢献してまいります。ご引率いただいた指導者・保護者の皆様に心より御礼申し上げます。`
+              : `🤝【〇〇少年野球の皆さん、来てくれてありがとう！】⚾️✨\n本日の練習に、地域の学童野球チームの選手たちが体験に来てくれました！\n\n最初は緊張していた小学生も、先輩たちと一緒にノックを受けるうちに笑顔いっぱいに😆\n「楽しかった！」「また来たい！」という言葉に、選手たちも大喜びでした！\nまたいつでもグラウンドに遊びに来てくださいね！お待ちしています！🙌`
+          );
+        } else if (eventId === 'tournament') {
+          setCustomMemo(
+            isFb
+              ? `【公式戦 試合結果のご報告】\n\n本日行われました公式戦の試合結果をご報告いたします。\n\n■ 大会名：第〇回 大会\n■ 対戦カード：越谷ボーイズ vs 〇〇ボーイズ\n■ 試合結果：〇 - 〇\n\n選手たちは日頃の練習の成果を存分に発揮し、最後まで全員野球で戦い抜きました。勝敗の先にある課題にも真摯に向き合い、次戦へ向けてさらなる技術とチーム力の向上を図ってまいります。\n大会関係者の皆様、ならびに対戦いただいた〇〇ボーイズの皆様に深く御礼申し上げます。`
+              : `🏆【公式戦結果】全員野球で掴んだ一歩！⚾️🔥\n本日行われた公式戦の結果をお知らせします！\n\n緊迫した展開が続きましたが、最後まで声を掛け合い、ベンチもスタンドも心をひとつにして戦い抜きました！\n選手たちの必死なスライディングや笑顔…一戦ごとにたくましく成長しています！\n熱い応援を送ってくださった皆様、本当にありがとうございました！次も全力疾走で挑みます！👊`
+          );
+        } else if (eventId === 'daily_schedule') {
+          setCustomMemo(
+            isFb
+              ? `【越谷ボーイズの週末スケジュールとサポート環境】\n\n中学硬式野球をご検討中の保護者様より多く寄せられる「土日の拘束時間や当番」に関する活動の様子をご紹介いたします。\n\n■ 週末の標準スケジュール\n・8:30 集合・元気な挨拶（凡事徹底）\n・9:00 体幹ウォーミングアップ・怪我予防の基礎反復\n・12:00 昼食・休憩（仲間との楽しい時間）\n・13:00 実戦形式・シートノック\n・16:30 グラウンド整備・道具手入れ・解散\n\n当チームでは家庭や学業とのバランスを重視し、保護者のお茶当番負担の軽減を推進しています。無理のない協力体制で選手たちを温かく支えています。`
+              : `⏰【越谷ボーイズのある週末の1日】⚾️✨\n「中学の硬式チームって、土日はどんなスケジュール？」\nそんな疑問にお答えします！\n\n☀️ 8:30 集合・挨拶（凡事徹底！）\n⚾️ 9:00 ウォーミングアップ・怪我を防ぐ基礎練習\n🍙 12:00 お昼ごはん（みんなで楽しく♪）\n🔥 13:00 実戦・バッティング練習\n✨ 16:30 グラウンド整備・道具を磨いて解散！\n\n保護者のお茶当番負担も軽減を進めており、無理なく笑顔で応援できる環境です😊 ぜひ一度見学会で雰囲気を確かめてみてくださいね！`
+          );
+        } else if (eventId === 'practice') {
+          setCustomMemo(
+            isFb
+              ? `【普段の練習風景より：『凡事徹底』の精神】\n\n越谷ボーイズ（NPO法人 越谷K・クラブ）では、週末の練習において「当たり前のことを、人並み外れて徹底して行う（凡事徹底）」を指導方針の柱に据えています。\n\n挨拶、靴や道具の整頓、グラウンド整備への真摯な姿勢。高校野球、そして社会に出ても通用する人間力を育てることこそが私たちの使命です。選手たちは泥だらけになりながら、確かな一歩を積み重ねております。`
+              : `⚾️【日々の積み重ねが未来をつくる】✨\n越谷ボーイズのグラウンドでは、今日も元気な挨拶と全力疾走が響いています！\n\n「ボールを大切にする」「ベンチの荷物を美しく整える」\n技術の上達と同じくらい、道具や仲間へのリスペクトを日常から徹底しています👟🎒\n当たり前の徹底が、ピンチの時に一歩前へ踏み出す勇気になります！今週末も全員野球で顔晴ります！💪`
+          );
+        } else if (eventId === 'summer_camp') {
+          setCustomMemo(
+            isFb
+              ? `【夏季強化合宿 終了のご報告】\n\n夏季強化合宿が無事全日程を終了いたしました。本合宿では「自立と協調」をテーマに掲げ、技術反復のみならず共同生活を通じた自己管理・感謝の心を養いました。\n選手たちは厳しいメニューを全員の気迫で乗り越え、チームとして確固たる結束力を確立いたしました。手厚い体調管理・食事サポートを担っていただいた保護者の皆様に心より厚く御礼申し上げます。`
+              : `☀️【夏合宿！全員で乗り越えた絆の夏】🔥\n猛暑に負けず、夏季強化合宿を無事に走り切りました！⚾️\n\n朝のランニングから日が暮れるまでの徹底ノック、夜のミーティングやみんなで囲む大盛りごはん🍚✨\n苦しい時こそ仲間同士で声を掛け合い、限界をひとつ突破した選手たちの表情はたくましさそのものです！秋の大会へ弾みをつけます！💪`
+          );
+        } else if (eventId === 'parents') {
+          setCustomMemo(
+            isFb
+              ? `【父母会・総会開催のご報告と感謝】\n\n越谷ボーイズ（NPO法人 越谷K・クラブ）の父母会・総会を開催いたしました。指導方針の共有やサポート体制について建設的な意見交換が行われ、指導者・保護者が「チームの両輪」となって選手たちの成長を支えていく体制を再確認いたしました。子どもたちの夢を共に支えてくださる保護者の皆様の献身的なご尽力に深く感謝申し上げます。`
+              : `🤝【選手たちの笑顔を支える強力な応援団！】✨\nいつも選手たちが思いきり白球を追えるよう、温かく見守り支えてくれる保護者の皆様、本当にありがとうございます！\n\n越谷ボーイズでは、保護者の当番負担を減らしながら、無理のない範囲で笑顔で協力し合う環境づくりを進めています😊 グラウンドに広がる温かい声援が選手たちの一番のエネルギーです！⚾️`
+          );
+        }
+      }, [eventId, format, number, nameJa, nameEn, grade, position, originTeam, playerMessage]);
+
+      // 写真ファイル選択
+      const handlePhotoSelect = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            setUploadedImgUrl(event.target.result);
+            showToast('✓ 写真を読み込みました！カードが完成しました');
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      // 野球カード画像のダウンロード保存
+      const downloadCard = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        setIsCardSaving(true);
+        try {
+          const imageLink = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.download = `越谷ボーイズ選手カード_${nameJa || '選手'}.png`;
+          a.href = imageLink;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          showToast('✓ カード画像をスマホの写真に保存しました！');
+        } catch (e) {
+          showToast('カード画像を長押しして「写真に追加」してください');
+        } finally {
+          setIsCardSaving(false);
+        }
+      };
+
+      // 投稿本文の構築
+      const buildOutput = () => {
+        const cta = CTAS[purpose] || CTAS.experience;
+        const isFb = format === 'facebook';
+        const isReel = format === 'insta_reel';
 
         let body = customMemo.trim();
 
-        // リール用フック
         if (isReel) {
-          const reelHooks = {
-            experience: '🔥【硬式野球って実際どうなの？】\n越谷ボーイズの普段の雰囲気をショート動画でお届け🎥✨\n\n',
-            tournament: '⚡️【ナイスプレー集！】\nピンチを救った好返球＆歓喜のベンチ！今日のナイスシーンをお届け🔥\n\n',
-            practice: '👟【靴ならべ・大きな挨拶】\n技術よりまず大切な「凡事徹底」。越谷ボーイズの元気な練習風景⚾️✨\n\n',
-            ground_opening: '🎍【新シーズン始動！】\n今年一年怪我なく全力プレー！気持ち新たにグランド開き🌅⚾️\n\n',
-            seminar: '😊【笑顔いっぱい野球教室！】\nお兄ちゃん選手たちが優しく教える特別な一日⚾️🎶\n\n',
-            summer_camp: '☀️【泥だらけの夏合宿！】\n仲間と声を掛け合って乗り越えた、たくましい表情をご覧ください💪🔥\n\n',
-            parents: '🤝【いつも温かいサポートありがとう！】\n笑顔と声援で支えてくれるお母さん・お父さんの応援風景📸✨\n\n'
-          };
-          body = (reelHooks[eventId] || '⚾️【越谷ボーイズ ショートクリップ】\n\n') + body;
+          const reelPrefix = eventId === 'player'
+            ? `🔥【今週のキラリ選手！ショート動画】\n背番号#${number || '00'} ${nameJa}選手の熱いプレーをお届け🎥✨\n\n`
+            : `🔥【越谷ボーイズ ショート動画】\nグラウンドの熱気・笑顔・全力プレーをお届け🎥✨\n\n`;
+          body = reelPrefix + body;
         }
 
-        // 大会スコアの反映
-        if (eventId === 'tournament' && (matchDetail.opponent || matchDetail.myScore)) {
-          const scoreLine = `\n\n【試合結果】\n■ 球場：${matchDetail.stadium || '越谷市民球場'}\n■ 越谷ボーイズ ${matchDetail.myScore || '0'} - ${matchDetail.opScore || '0'} ${matchDetail.opponent || '対戦相手'}\n`;
-          body = body + scoreLine;
-        }
+        const ctaText = isFb ? cta.fb : cta.insta;
 
-        const ctaText = isFb ? cta.fbText : cta.instaText;
-
-        const sign = isFb
-          ? `\n━━━━━━━━━━━━━━━━━━━━━\n越谷ボーイズ（NPO法人 越谷K・クラブ）\n■ ホームページ：https://koshigaya-boys.com/\n■ 活動拠点：越谷市内グランド\n━━━━━━━━━━━━━━━━━━━━━`
+        const signature = isFb
+          ? `\n━━━━━━━━━━━━━━━━━━━━━━━\n越谷ボーイズ（NPO法人 越谷K・クラブ）\n■ 公式サイト：https://koshigaya-boys.com/\n■ 活動拠点：越谷市内・専用グラウンド\n━━━━━━━━━━━━━━━━━━━━━━━`
           : `\n-----------------------------\n⚾️ 越谷ボーイズ（NPO法人 越谷K・クラブ）\n「凡事徹底」高校野球へつなぐ人間育成\n-----------------------------`;
 
-        const tags = isFb ? HASHTAGS_FB.join(' ') : HASHTAGS_INSTA.join(' ');
+        const tags = isFb ? TAGS_FB : TAGS_INSTA;
 
-        return `${body}\n\n${ctaText}\n\n${sign}\n\n${tags}`;
+        return `${body}\n\n${ctaText}\n\n${signature}\n\n${tags}`;
       };
 
-      const finalPostText = generateText(format);
+      const finalPostText = buildOutput();
 
-      // コピー機能
-      const doCopy = (text) => {
+      // クリップボードコピー
+      const copyToClipboard = (key = 'main') => {
+        const done = () => {
+          setCopiedKey(key);
+          showToast('✓ 本文をコピーしました！SNSに貼るだけです');
+          setTimeout(() => setCopiedKey(''), 2200);
+        };
+
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2400);
-          }).catch(() => fallbackCopy(text));
+          navigator.clipboard.writeText(finalPostText).then(done).catch(() => fallbackCopy(finalPostText, done));
         } else {
-          fallbackCopy(text);
+          fallbackCopy(finalPostText, done);
         }
       };
 
-      const fallbackCopy = (text) => {
-        const area = document.createElement("textarea");
-        area.value = text;
-        area.style.position = "fixed";
-        area.style.left = "-9999px";
-        document.body.appendChild(area);
-        area.select();
+      const fallbackCopy = (str, done) => {
+        const el = document.createElement('textarea');
+        el.value = str;
+        el.style.position = 'fixed';
+        el.style.left = '-9999px';
+        document.body.appendChild(el);
+        el.select();
         try {
           document.execCommand('copy');
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2400);
+          done();
         } catch (e) {
-          alert('コピーに失敗しました。本文枠を長押ししてコピーしてください。');
+          showToast('手動でコピーしてください');
         }
-        document.body.removeChild(area);
+        document.body.removeChild(el);
       };
 
+      // 安全な全体初期化リセット（確認モーダル経由）
+      const handleConfirmReset = () => {
+        setEventId('player');
+        setFormat('insta_feed');
+        setPurpose('experience');
+        setCardTheme('gold');
+        setNumber('10');
+        setNameJa('佐藤 颯太');
+        setNameEn('SOUTA SATO');
+        setPosition('投手・外野手');
+        setHandedness('右投左打');
+        setGrade('中学2年');
+        setOriginTeam('越谷ライオンズ出身');
+        setPlayerMessage('僕も小6の秋は硬式球にドキドキしたけど、先輩たちが優しく教えてくれてすぐ慣れました！まずは気軽にキャッチボールしに来てください！');
+        setShowResetConfirm(false);
+        showToast('最初に戻しました 🔄');
+      };
+
+      // 安心チェックの検出
+      const ngHits = NG_WORDS.filter(w => customMemo.includes(w.word));
+
       return (
-        <div className="max-w-3xl mx-auto px-3.5 py-4 sm:px-6 sm:py-8">
+        <div className="max-w-xl mx-auto px-4 py-4 sm:px-6 sm:py-6">
           
-          {/* ヘッダーカード */}
-          <header className="bg-brand-red text-white rounded-3xl shadow-lg p-4 sm:p-7 mb-4 border-b-4 border-brand-redDark relative overflow-hidden">
-            {/* リセット完了トースト通知 */}
-            {showResetToast && (
-              <div className="absolute top-3 right-3 bg-white text-brand-red font-bold text-xs px-3 py-1.5 rounded-full shadow-lg border border-brand-cream flex items-center gap-1.5 fade-in z-20">
-                <span>🔄</span>
-                <span>最初に戻しました！</span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
-              <div className="flex items-center gap-1.5">
-                <span className="bg-brand-cream text-brand-red font-bold text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full shadow-inner">
-                  中学硬式野球
-                </span>
-                <span className="text-[11px] sm:text-xs text-brand-cream/90 font-medium">
-                  NPO法人 越谷K・クラブ
-                </span>
-              </div>
-              <span className="bg-white/15 text-brand-cream text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full font-medium">
-                広報サポート用
-              </span>
+          {/* トースト通知 */}
+          {toastMsg && (
+            <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-cardMain text-cardSub px-5 py-3 rounded-full font-bold text-sm shadow-2xl border border-cardSub z-50 fade-in flex items-center gap-2">
+              <span className="text-base">⚾️</span>
+              <span>{toastMsg}</span>
             </div>
+          )}
 
-            {/* ロゴ＆タイトル：タップで初期状態に戻るインタラクティブエリア */}
-            <div
-              onClick={handleResetAll}
-              role="button"
-              tabIndex={0}
-              title="タップすると最初の画面（初期状態）に戻ります"
-              className="flex items-center gap-2 sm:gap-4 cursor-pointer group transition transform active:scale-[0.98] select-none rounded-2xl p-1 -m-1 hover:bg-white/10"
-            >
-              <div className="shrink-0 relative">
-                <div className="w-10 h-10 min-[375px]:w-11 min-[375px]:h-11 sm:w-20 sm:h-20 rounded-full bg-brand-cream p-0.5 sm:p-1 shadow-md ring-2 ring-brand-cream/40 overflow-hidden flex items-center justify-center transition-transform group-hover:rotate-6 group-hover:scale-105">
-                  <img
-                    src={MASCOT_IMG_SRC}
-                    onError={(e) => {
-                      if (e.target.src.indexOf('MASCOT_FALLBACK') === -1) {
-                        e.target.src = MASCOT_FALLBACK;
-                      }
-                    }}
-                    alt="越谷ボーイズ マスコットキャラクター"
-                    className="w-full h-full object-cover rounded-full"
-                  />
+          {/* 安全なリセット確認モーダル（うっかり全消去を防止） */}
+          {showResetConfirm && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 fade-in">
+              <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-2 border-stone-200">
+                <div className="text-center mb-4">
+                  <span className="text-4xl block mb-2">🔄</span>
+                  <h3 className="text-lg font-black text-stone-800">最初に戻しますか？</h3>
+                  <p className="text-sm text-stone-600 mt-1 leading-relaxed">
+                    現在入力されているお名前や文章が最初の見本に戻ります。
+                  </p>
                 </div>
-                <span className="absolute -bottom-1 -right-1 bg-brand-cream text-brand-red text-[8px] sm:text-[10px] font-black px-1 py-0.2 sm:px-1.5 sm:py-0.5 rounded-full shadow border border-brand-red/30">
-                  リセット
-                </span>
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <h1 
-                    style={{ 
-                      whiteSpace: 'nowrap', 
-                      wordBreak: 'keep-all',
-                      fontSize: 'clamp(15.5px, 4.6vw, 24px)'
-                    }}
-                    className="font-black tracking-tighter sm:tracking-tight group-hover:text-brand-creamLight transition leading-none py-0.5"
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowResetConfirm(false)}
+                    className="py-3 px-4 rounded-xl border border-stone-300 font-bold text-stone-600 hover:bg-stone-100 text-sm"
                   >
-                    越谷ボーイズ かんたん広報ノート
-                  </h1>
-                  <span className="text-[10px] bg-white/20 text-brand-cream px-2 py-0.5 rounded-full font-bold opacity-80 group-hover:opacity-100 transition hidden sm:inline-block">
-                    🔄 タップで初期化
-                  </span>
+                    やめる
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmReset}
+                    className="py-3 px-4 rounded-xl bg-cardMain text-cardSub font-black shadow hover:opacity-90 text-sm"
+                  >
+                    最初に戻す
+                  </button>
                 </div>
-                <p className="text-[11px] sm:text-sm text-brand-cream/90 mt-1 leading-snug sm:leading-relaxed">
-                  選ぶだけでInstagram＆Facebookの投稿文が完成！「考えるを、ひとりにしない」応援ツールです。
-                </p>
               </div>
             </div>
+          )}
 
-            {/* お母さん向け使い分けメモ */}
-            <div className="mt-4 bg-brand-redDark/70 rounded-2xl p-3 text-xs text-brand-cream space-y-1.5 border border-brand-cream/20">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">📸</span>
-                <span><strong>Instagram：</strong>小学生のお母さん・子ども向け（写真・動画・親しみやすさ）</span>
+          {/* ヘッダーカード */}
+          <header className="bg-cardMain text-cardSub rounded-3xl shadow-md p-4 sm:p-5 mb-4 border-b-4 border-[#8B3738] relative overflow-hidden">
+            {/* 上部バッジと独立した安全リセットボタン */}
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <span className="bg-cardSub text-cardMain text-xs font-black px-3 py-1 rounded-full shadow-inner tracking-wider">
+                考えるを、ひとりにしない。
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(true)}
+                className="bg-black/25 text-cardSub hover:bg-black/40 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 active:scale-95 transition"
+              >
+                <span>🔄</span>
+                <span>最初に戻す</span>
+              </button>
+            </div>
+
+            {/* ロゴ ＆ タイトル */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-cardSub p-0.5 shadow shrink-0 overflow-hidden flex items-center justify-center">
+                <img
+                  src={MASCOT_URL}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                  alt="越谷ボーイズ"
+                  className="w-full h-full object-cover rounded-full"
+                />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm">📘</span>
-                <span><strong>Facebook：</strong>OB・卒団生・地域の方向け（きちんとした活動報告・信頼感）</span>
+              <div className="flex-1 min-w-0">
+                <h1
+                  style={{
+                    whiteSpace: 'nowrap',
+                    wordBreak: 'keep-all',
+                    fontSize: 'clamp(16px, 4.8vw, 24px)'
+                  }}
+                  className="font-black tracking-tight leading-none text-cardSub"
+                >
+                  越谷ボーイズ かんたん広報ノート
+                </h1>
+                <p className="text-xs text-cardSub/90 mt-1 truncate">
+                  選ぶだけで1分でSNS投稿文＆カード画像が完成！
+                </p>
               </div>
             </div>
           </header>
 
-          {/* 📖 お母さんがたのための「目的と使い方ガイド」（開閉式アコーディオン） */}
-          <section className="mb-5 bg-white rounded-3xl p-4 sm:p-5 shadow-sm border-2 border-brand-creamDark transition">
+          {/* お母さんのための 使い方ガイド（アコーディオン） */}
+          <div className="mb-4">
             <button
               type="button"
               onClick={() => setShowGuide(!showGuide)}
-              className="w-full flex items-center justify-between gap-3 text-left focus:outline-none"
+              className="w-full bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm flex items-center justify-between text-sm font-bold text-stone-800 hover:bg-stone-50 transition active:scale-[0.99]"
             >
-              <div className="flex items-center gap-2.5">
-                <span className="w-8 h-8 rounded-2xl bg-brand-cream text-brand-red font-bold flex items-center justify-center text-lg shrink-0">
-                  📖
-                </span>
-                <div>
-                  <h2 className="font-bold text-brand-textMain text-sm sm:text-base">
-                    はじめての方へ：このアプリの目的＆かんたん使い方
-                  </h2>
-                  <p className="text-[11px] sm:text-xs text-brand-textMuted">
-                    タップすると「使い方のコツ・箇条書き」が開きます
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-bold text-brand-red bg-brand-cream/60 px-3 py-1.5 rounded-xl shrink-0">
-                {showGuide ? '▲ 閉じる' : '▼ 見てみる'}
+              <span className="flex items-center gap-2">
+                <span className="text-base">📖</span>
+                <span>お母さんのための 使い方ガイド（タップで開閉）</span>
               </span>
+              <span className="text-xs text-stone-500 font-bold">{showGuide ? '▲ 閉じる' : '▼ 開く'}</span>
             </button>
 
             {showGuide && (
-              <div className="mt-4 pt-4 border-t border-brand-cream space-y-4 text-xs sm:text-sm fade-in leading-relaxed text-slate-700">
-                
-                {/* 目的の箇条書き */}
-                <div className="bg-brand-cream/40 p-3.5 rounded-2xl border border-brand-creamDark space-y-2">
-                  <div className="font-bold text-brand-red flex items-center gap-1.5 text-xs sm:text-sm">
-                    <span>🎯</span> なぜこのアプリを使うの？（目的）
-                  </div>
-                  <ul className="list-disc list-inside space-y-1 text-slate-700">
-                    <li><strong>「考えるを、ひとりにしない」：</strong>「何を書けばいいの？」と一人で悩む時間をゼロにします。</li>
-                    <li><strong>小学生とお母さんに「安心」を届ける：</strong>学童チームの先輩がいる姿や、怪我予防・無理のない当番体制を発信して、見学に来やすくします。</li>
-                    <li><strong>写真と文章でチームの温かさを伝える：</strong>挨拶や道具磨き（凡事徹底）など、普段のすてきな姿をそのまま届けます。</li>
+              <div className="mt-2 bg-white rounded-2xl p-4 sm:p-5 border border-stone-200 shadow-sm text-sm space-y-3.5 fade-in">
+                <div className="bg-[#FAF7F5] p-3.5 rounded-xl border border-stone-200">
+                  <h3 className="font-bold text-cardMain mb-1.5 flex items-center gap-1.5 text-sm">
+                    <span>🎯</span>
+                    <span>なぜ発信するの？</span>
+                  </h3>
+                  <ul className="space-y-1.5 text-stone-700 leading-relaxed text-xs sm:text-sm list-disc list-inside">
+                    <li><strong>小学生に「憧れ」を：</strong>「あ、うちの少年野球チームの先輩がいる！」とわかると、体験練習に行きやすくなります。</li>
+                    <li><strong>保護者に「安心」を：</strong>「お茶当番の負担軽減や無理のないスケジュール」が見えることで、不安が解消されます。</li>
                   </ul>
                 </div>
+                <div className="bg-[#FAF7F5] p-3.5 rounded-xl border border-stone-200">
+                  <h3 className="font-bold text-cardMain mb-1.5 flex items-center gap-1.5 text-sm">
+                    <span>📱</span>
+                    <span>たったの3ステップで完成！</span>
+                  </h3>
+                  <ol className="space-y-1.5 text-stone-700 leading-relaxed text-xs sm:text-sm list-decimal list-inside">
+                    <li><strong>行事を選ぶ：</strong>「選手紹介」「体験会」「試合結果」など、今日の出来事をタップ。</li>
+                    <li><strong>写真やメモを確認：</strong>選手カードを作るときは写真を選んで「カード画像を保存」を押すだけ！</li>
+                    <li><strong>画面下の「本文をコピー」：</strong>Instagramにそのまま貼り付け（ペースト）して投稿完了です。</li>
+                  </ol>
+                </div>
+              </div>
+            )}
+          </div>
 
-                {/* 操作方法の箇条書き */}
-                <div className="space-y-2">
-                  <div className="font-bold text-brand-textMain flex items-center gap-1.5 text-xs sm:text-sm">
-                    <span>📱</span> かんたん操作手順（たったの3ステップ）
+          {/* ステップ① 行事・出来事を選ぶ */}
+          <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-stone-200 mb-4">
+            <div className="flex items-center gap-2.5 mb-3.5">
+              <span className="w-7 h-7 rounded-full bg-cardMain text-cardSub text-sm font-black flex items-center justify-center shrink-0">
+                1
+              </span>
+              <div>
+                <h2 className="font-black text-stone-800 text-base">
+                  今日の行事・出来事を選ぶ
+                </h2>
+                <p className="text-xs text-stone-500">
+                  タップするとおすすめの文章が自動でセットされます
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2.5">
+              {EVENTS.map(ev => {
+                const isSelected = eventId === ev.id;
+                return (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    onClick={() => setEventId(ev.id)}
+                    className={`p-3.5 text-left rounded-2xl border-2 transition-all active:scale-[0.99] ${
+                      isSelected
+                        ? 'border-cardMain bg-cardSub/40 ring-2 ring-cardMain/30 shadow-sm'
+                        : 'border-stone-200 bg-white hover:bg-stone-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className={`text-sm sm:text-base font-black ${isSelected ? 'text-cardMain' : 'text-stone-800'}`}>
+                        {ev.title}
+                      </span>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-black shrink-0 ${
+                        isSelected ? 'bg-cardMain text-cardSub' : 'bg-stone-100 text-stone-600'
+                      }`}>
+                        {ev.badge}
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+                      {ev.desc}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* 【連動エリア】選手紹介が選ばれている時に展開する「プロ野球カードメーカー」 */}
+          {eventId === 'player' && (
+            <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-md border-2 border-cardMain mb-4 fade-in">
+              <div className="border-b border-stone-200 pb-3 mb-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">⚾️</span>
+                    <h2 className="font-black text-cardMain text-base sm:text-lg">
+                      プロ野球チップス風 カード画像メーカー
+                    </h2>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                      <div className="font-bold text-brand-red mb-1">ステップ 1</div>
-                      <div className="font-bold text-slate-800 mb-0.5">行事を選ぶ</div>
-                      <p className="text-slate-600">「選手紹介」「体験会」「試合結果」など、当てはまるものをタップ。</p>
-                    </div>
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                      <div className="font-bold text-brand-red mb-1">ステップ 2</div>
-                      <div className="font-bold text-slate-800 mb-0.5">投稿先を選ぶ</div>
-                      <p className="text-slate-600">Instagram（写真・動画）かFacebook（活動報告）を選びます。</p>
-                    </div>
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                      <div className="font-bold text-brand-red mb-1">ステップ 3</div>
-                      <div className="font-bold text-slate-800 mb-0.5">コピーして貼るだけ</div>
-                      <p className="text-slate-600">下のボタンを押し、InstagramやFacebookアプリを開いて貼り付けるだけ！</p>
-                    </div>
+                  <span className="bg-amber-500 text-stone-900 text-xs font-black px-2.5 py-1 rounded-full shrink-0 shadow-sm">
+                    キラカード仕様
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-stone-600 mt-1">
+                  写真を選ぶだけで本格カードが完成！お好みのカードカラーも選べます
+                </p>
+              </div>
+
+              {/* ★ 新機能：カードデザイン（3つのテーマカラー）選択ボタン */}
+              <div className="mb-4">
+                <label className="block text-xs sm:text-sm font-black text-stone-800 mb-2 flex items-center gap-1.5">
+                  <span>🎨</span>
+                  <span>カードのカラーデザインを選ぶ（ワンタップで着せ替え）</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCardTheme('gold')}
+                    className={`py-2.5 px-2 rounded-2xl border-2 font-black text-xs sm:text-sm flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                      cardTheme === 'gold'
+                        ? 'border-amber-500 bg-amber-50 text-amber-950 ring-2 ring-amber-400 shadow-md'
+                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span className="text-lg">🥇</span>
+                    <span>限定ゴールド</span>
+                    <span className="text-[10px] text-amber-700 font-bold">深紅 × 輝く金</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCardTheme('navy')}
+                    className={`py-2.5 px-2 rounded-2xl border-2 font-black text-xs sm:text-sm flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                      cardTheme === 'navy'
+                        ? 'border-blue-700 bg-blue-50 text-blue-950 ring-2 ring-blue-500 shadow-md'
+                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span className="text-lg">🥈</span>
+                    <span>侍ネイビー</span>
+                    <span className="text-[10px] text-blue-700 font-bold">精悍な紺 × 水色</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCardTheme('classic')}
+                    className={`py-2.5 px-2 rounded-2xl border-2 font-black text-xs sm:text-sm flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                      cardTheme === 'classic'
+                        ? 'border-[#BB5758] bg-[#FAF3F0] text-[#BB5758] ring-2 ring-[#BB5758]/50 shadow-md'
+                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span className="text-lg">🥉</span>
+                    <span>クラシックローズ</span>
+                    <span className="text-[10px] text-stone-500 font-bold">温かみの上品赤</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* カード完成プレビュー */}
+              <div className="flex flex-col items-center mb-4">
+                <div className="w-full max-w-[290px] sm:max-w-[320px] rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-stone-900 aspect-[2/3] relative">
+                  <canvas ref={canvasRef} className="w-full h-full object-contain block" />
+                </div>
+
+                {/* カードダウンロードボタン */}
+                <button
+                  type="button"
+                  onClick={downloadCard}
+                  disabled={isCardSaving}
+                  className="w-full max-w-[320px] mt-3.5 py-3.5 px-4 bg-gradient-to-r from-cardMain to-[#851E20] text-cardSub font-black rounded-2xl text-sm sm:text-base shadow-lg hover:opacity-95 active:scale-95 transition flex items-center justify-center gap-2 border border-white/30"
+                >
+                  <span className="text-lg">💾</span>
+                  <span>カード画像をスマホの写真に保存する</span>
+                </button>
+                <p className="text-xs text-stone-500 mt-2 text-center font-medium">
+                  ※Instagram投稿の1枚目（表紙）にそのまま使えます
+                </p>
+              </div>
+
+              {/* 写真・選手情報 入力フォーム */}
+              <div className="bg-[#FAF7F5] p-4 rounded-2xl border border-stone-200 space-y-3.5">
+                
+                {/* 写真選択（大きくタップしやすい親切ボタン枠） */}
+                <div>
+                  <label className="block text-sm font-black text-stone-800 mb-1.5 flex items-center gap-1.5">
+                    <span>📷</span>
+                    <span>① 選手の写真を選ぶ（スマホの写真から）</span>
+                  </label>
+                  
+                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-cardMain/60 bg-white rounded-2xl p-4 cursor-pointer hover:bg-cardSub/20 transition active:scale-[0.99]">
+                    <span className="text-2xl mb-1">📁</span>
+                    <span className="text-sm font-bold text-cardMain">ここをタップして写真を選ぶ</span>
+                    <span className="text-xs text-stone-500 mt-0.5">バッティングや投球などの縦向き写真がキレイに収まります</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoSelect}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                {/* 背番号 ＆ 選手名（漢字） */}
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">背番号</label>
+                    <input
+                      type="text"
+                      value={number}
+                      onChange={e => setNumber(e.target.value)}
+                      placeholder="10"
+                      className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-bold text-center outline-none focus:border-cardMain"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">選手名（漢字）</label>
+                    <input
+                      type="text"
+                      value={nameJa}
+                      onChange={e => setNameJa(e.target.value)}
+                      placeholder="佐藤 颯太"
+                      className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-bold outline-none focus:border-cardMain"
+                    />
                   </div>
                 </div>
 
-                {/* お母さん安心のワンポイント */}
-                <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-amber-900 space-y-1 text-xs">
-                  <span className="font-bold">💡 お母さん安心ポイント：</span>
-                  <p>相手チームへの敬意や、誤解を招きやすい言葉が入っていないか「安心チェック機能」が自動で教えてくれます。例文のままでも、文章を少し書き換えても自由に使えます。</p>
+                {/* 選手名（ローマ字） */}
+                <div className="text-sm">
+                  <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">
+                    選手名（ローマ字・カード下部に大きく印字）
+                  </label>
+                  <input
+                    type="text"
+                    value={nameEn}
+                    onChange={e => setNameEn(e.target.value.toUpperCase())}
+                    placeholder="SOUTA SATO"
+                    className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-bold tracking-wider uppercase outline-none focus:border-cardMain"
+                  />
                 </div>
 
+                {/* 学年 ＆ ポジション ＆ 投打（プロスペック） */}
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">学年</label>
+                    <select
+                      value={grade}
+                      onChange={e => setGrade(e.target.value)}
+                      className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-bold outline-none focus:border-cardMain"
+                    >
+                      <option value="中学1年">中学1年</option>
+                      <option value="中学2年">中学2年</option>
+                      <option value="中学3年">中学3年</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">守備位置</label>
+                    <input
+                      type="text"
+                      value={position}
+                      onChange={e => setPosition(e.target.value)}
+                      placeholder="投手・外野手"
+                      className="w-full p-2.5 bg-white border border-stone-300 rounded-xl outline-none focus:border-cardMain"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">投打</label>
+                    <select
+                      value={handedness}
+                      onChange={e => setHandedness(e.target.value)}
+                      className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-bold outline-none focus:border-cardMain"
+                    >
+                      <option value="右投右打">右投右打</option>
+                      <option value="右投左打">右投左打</option>
+                      <option value="左投左打">左投左打</option>
+                      <option value="左投右打">左投右打</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 出身学童チーム（キラー情報） */}
+                <div className="text-sm">
+                  <label className="block font-black text-cardMain mb-1 text-xs sm:text-sm flex items-center gap-1">
+                    <span>★</span>
+                    <span>出身学童野球チーム名（小学生や保護者に一番響きます！）</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={originTeam}
+                    onChange={e => setOriginTeam(e.target.value)}
+                    placeholder="越谷ライオンズ出身"
+                    className="w-full p-2.5 bg-white border-2 border-cardMain/40 rounded-xl font-bold outline-none focus:border-cardMain"
+                  />
+                  <p className="text-xs text-stone-500 mt-1">
+                    ※カード右下の金フチバッジに印字されます
+                  </p>
+                </div>
+
+                {/* 後輩へのメッセージ */}
+                <div className="text-sm">
+                  <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">
+                    後輩・小学生への一言メッセージ（投稿文に反映されます）
+                  </label>
+                  <textarea
+                    rows="2"
+                    value={playerMessage}
+                    onChange={e => setPlayerMessage(e.target.value)}
+                    placeholder="例：僕も最初は硬式にドキドキしたけど、すぐ慣れたよ！"
+                    className="w-full p-2.5 bg-white border border-stone-300 rounded-xl text-xs sm:text-sm leading-relaxed outline-none focus:border-cardMain"
+                  />
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* ステップ② 投稿フォーマットを選ぶ */}
+          <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-stone-200 mb-4">
+            <div className="flex items-center gap-2.5 mb-3.5">
+              <span className="w-7 h-7 rounded-full bg-cardMain text-cardSub text-sm font-black flex items-center justify-center shrink-0">
+                2
+              </span>
+              <div>
+                <h2 className="font-black text-stone-800 text-base">
+                  どこに投稿しますか？
+                </h2>
+                <p className="text-xs text-stone-500">
+                  投稿先に合わせて文章のトーンが自動で変わります
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setFormat('insta_feed')}
+                className={`p-3.5 text-left rounded-2xl border-2 flex items-center gap-3 transition-all active:scale-[0.99] ${
+                  format === 'insta_feed'
+                    ? 'border-cardMain bg-cardSub/40 text-cardMain font-black ring-2 ring-cardMain/30'
+                    : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                }`}
+              >
+                <span className="text-2xl shrink-0">📸</span>
+                <div className="min-w-0">
+                  <div className="text-sm font-black">Instagram</div>
+                  <div className="text-xs text-stone-500">写真・普段の様子</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFormat('insta_reel')}
+                className={`p-3.5 text-left rounded-2xl border-2 flex items-center gap-3 transition-all active:scale-[0.99] ${
+                  format === 'insta_reel'
+                    ? 'border-purple-600 bg-purple-50 text-purple-950 font-black ring-2 ring-purple-300'
+                    : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                }`}
+              >
+                <span className="text-2xl shrink-0">🎬</span>
+                <div className="min-w-0">
+                  <div className="text-sm font-black">リール動画</div>
+                  <div className="text-xs text-stone-500">ショート動画用</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFormat('facebook')}
+                className={`p-3.5 text-left rounded-2xl border-2 flex items-center gap-3 transition-all active:scale-[0.99] ${
+                  format === 'facebook'
+                    ? 'border-blue-600 bg-blue-50 text-blue-950 font-black ring-2 ring-blue-300'
+                    : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                }`}
+              >
+                <span className="text-2xl shrink-0">📘</span>
+                <div className="min-w-0">
+                  <div className="text-sm font-black">Facebook</div>
+                  <div className="text-xs text-stone-500">OB・丁寧な活動報告</div>
+                </div>
+              </button>
+            </div>
+          </section>
+
+          {/* ステップ③ 伝えたい想い・本文の確認（編集可能） */}
+          <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-stone-200 mb-4">
+            <div className="flex items-center justify-between border-b border-stone-100 pb-2 mb-2.5">
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-full bg-cardMain text-cardSub text-sm font-black flex items-center justify-center shrink-0">
+                  3
+                </span>
+                <div>
+                  <h2 className="font-black text-stone-800 text-base">
+                    本文の確認・編集
+                  </h2>
+                  <p className="text-xs text-stone-500">
+                    このままでもOK、気になる言葉は自由に書き直せます
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <textarea
+              rows="7"
+              value={customMemo}
+              onChange={e => setCustomMemo(e.target.value)}
+              placeholder="ここに投稿文が入ります（1行メモでも構いません）"
+              className="w-full p-3.5 bg-stone-50 border border-stone-200 rounded-2xl text-sm sm:text-base leading-relaxed text-stone-800 outline-none focus:bg-white focus:border-cardMain transition"
+            />
+
+            {/* 安心チェック機能（アラート） */}
+            {ngHits.length > 0 && (
+              <div className="mt-2.5 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-xs sm:text-sm space-y-1 fade-in">
+                <div className="font-bold flex items-center gap-1.5 text-amber-800">
+                  <span>⚠️</span>
+                  <span>安心チェック：表現の配慮ポイント</span>
+                </div>
+                {ngHits.map((h, i) => (
+                  <p key={i} className="text-stone-700">
+                    「<strong>{h.word}</strong>」が含まれています → <span className="text-amber-800 font-bold">{h.advice}</span>
+                  </p>
+                ))}
               </div>
             )}
           </section>
 
-          <div className="space-y-4 sm:space-y-6">
-
-            {/* ステップ 1: 行事・出来事を選ぶ */}
-            <section className="bg-white rounded-3xl p-5 shadow-sm border border-brand-creamDark/60">
-              <div className="flex items-center gap-2.5 mb-3.5">
-                <span className="w-8 h-8 rounded-2xl bg-brand-red text-brand-cream font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm">
-                  1
-                </span>
-                <div>
-                  <h2 className="font-bold text-brand-textMain text-base">どんな出来事の投稿ですか？</h2>
-                  <p className="text-xs text-brand-textMuted">当てはまるものを1つタップしてください</p>
-                </div>
+          {/* ステップ④ 最後の案内（CTA） */}
+          <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-stone-200 mb-4">
+            <div className="flex items-center gap-2.5 mb-3.5">
+              <span className="w-7 h-7 rounded-full bg-cardMain text-cardSub text-sm font-black flex items-center justify-center shrink-0">
+                4
+              </span>
+              <div>
+                <h2 className="font-black text-stone-800 text-base">
+                  最後の案内（どうしてほしい？）
+                </h2>
+                <p className="text-xs text-stone-500">
+                  文章の最後の締めくくりを選びます
+                </p>
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {EVENTS.map(ev => {
-                  const isSel = eventId === ev.id;
-                  return (
-                    <button
-                      key={ev.id}
-                      type="button"
-                      onClick={() => setEventId(ev.id)}
-                      className={`p-3.5 text-left rounded-2xl border-2 transition-all flex items-start gap-3 min-h-[64px] ${
-                        isSel
-                          ? 'border-brand-red bg-brand-cream/40 ring-2 ring-brand-red/20 text-brand-textMain font-bold'
-                          : 'border-slate-100 bg-white hover:border-brand-creamDark hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <span className="text-2xl shrink-0 mt-0.5">{ev.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1 mb-0.5">
-                          <span className="text-sm font-bold truncate">{ev.title}</span>
-                          {isSel && <span className="text-xs text-brand-red font-bold shrink-0">● 選択中</span>}
-                        </div>
-                        <p className="text-xs text-brand-textMuted leading-tight">{ev.desc}</p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* ステップ 2: どこに投稿しますか？ */}
-            <section className="bg-white rounded-3xl p-5 shadow-sm border border-brand-creamDark/60">
-              <div className="flex items-center gap-2.5 mb-3.5">
-                <span className="w-8 h-8 rounded-2xl bg-brand-red text-brand-cream font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm">
-                  2
-                </span>
-                <div>
-                  <h2 className="font-bold text-brand-textMain text-base">どこに投稿しますか？</h2>
-                  <p className="text-xs text-brand-textMuted">ボタンを押すと文章の雰囲気が自動で切り替わります</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormat('insta_feed');
-                    setCustomMemo(currentEvent.templates.insta);
-                  }}
-                  className={`py-3 px-2 rounded-2xl border-2 text-center transition-all flex flex-col items-center justify-center gap-1 min-h-[82px] ${
-                    format === 'insta_feed'
-                      ? 'border-brand-red bg-brand-cream/50 text-brand-red font-bold ring-2 ring-brand-red/20'
-                      : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="text-2xl">📸</span>
-                  <span className="text-xs sm:text-sm font-bold">Instagram</span>
-                  <span className="text-[11px] text-brand-textMuted">写真・普段の様子</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormat('insta_reel');
-                    setCustomMemo(currentEvent.templates.insta);
-                  }}
-                  className={`py-3 px-2 rounded-2xl border-2 text-center transition-all flex flex-col items-center justify-center gap-1 min-h-[82px] ${
-                    format === 'insta_reel'
-                      ? 'border-brand-red bg-brand-cream/50 text-brand-red font-bold ring-2 ring-brand-red/20'
-                      : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="text-2xl">🎬</span>
-                  <span className="text-xs sm:text-sm font-bold">リール動画</span>
-                  <span className="text-[11px] text-brand-textMuted">ショート動画用</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormat('facebook');
-                    setCustomMemo(currentEvent.templates.facebook);
-                  }}
-                  className={`py-3 px-2 rounded-2xl border-2 text-center transition-all flex flex-col items-center justify-center gap-1 min-h-[82px] ${
-                    format === 'facebook'
-                      ? 'border-brand-red bg-brand-cream/50 text-brand-red font-bold ring-2 ring-brand-red/20'
-                      : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="text-2xl">📘</span>
-                  <span className="text-xs sm:text-sm font-bold">Facebook</span>
-                  <span className="text-[11px] text-brand-textMuted">丁寧な活動報告</span>
-                </button>
-              </div>
-
-              {/* 🌟 選手紹介を選んだときの入力アシスタント */}
-              {eventId === 'player_card' && (
-                <div className="mt-4 p-4 bg-brand-cream/40 rounded-2xl border border-brand-creamDark space-y-3 fade-in">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs sm:text-sm text-brand-red flex items-center gap-1.5">
-                      <span>🌟</span> 選手カードの項目を簡単入力（文章にすぐ反映されます）
-                    </span>
-                    <button
-                      type="button"
-                      onClick={applyTemplate}
-                      className="text-xs bg-brand-red text-white px-2.5 py-1 rounded-xl font-bold shadow-sm"
-                    >
-                      文章に反映
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                    <div>
-                      <label className="block text-brand-textMuted mb-1 font-semibold">選手のお名前</label>
-                      <input
-                        type="text"
-                        value={playerData.name}
-                        onChange={e => updatePlayerAndText('name', e.target.value)}
-                        placeholder="例：山田 太郎"
-                        className="w-full p-2 bg-white border border-slate-200 rounded-xl outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-brand-textMuted mb-1 font-semibold">学年</label>
-                      <select
-                        value={playerData.grade}
-                        onChange={e => updatePlayerAndText('grade', e.target.value)}
-                        className="w-full p-2 bg-white border border-slate-200 rounded-xl outline-none"
-                      >
-                        <option value="中学1年">中学1年（新入団生）</option>
-                        <option value="中学2年">中学2年（先輩）</option>
-                        <option value="中学3年">中学3年（最高学年）</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-brand-textMuted mb-1 font-semibold text-brand-red">
-                        ★ 出身学童野球チーム名（一番刺さります！）
-                      </label>
-                      <input
-                        type="text"
-                        value={playerData.originTeam}
-                        onChange={e => updatePlayerAndText('originTeam', e.target.value)}
-                        placeholder="例：越谷ライオンズ、〇〇少年野球"
-                        className="w-full p-2 bg-white border-2 border-brand-red/40 rounded-xl outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-brand-textMuted mb-1 font-semibold">守備位置・ポジション</label>
-                      <input
-                        type="text"
-                        value={playerData.position}
-                        onChange={e => updatePlayerAndText('position', e.target.value)}
-                        placeholder="例：キャッチャー、右投左打"
-                        className="w-full p-2 bg-white border border-slate-200 rounded-xl outline-none"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-brand-textMuted mb-1 font-semibold">
-                        後輩小学生への一言メッセージ（等身大のアドバイス）
-                      </label>
-                      <input
-                        type="text"
-                        value={playerData.comment}
-                        onChange={e => updatePlayerAndText('comment', e.target.value)}
-                        placeholder="例：すぐ慣れるから心配いらないよ！まずはキャッチボールしに来てね！"
-                        className="w-full p-2 bg-white border border-slate-200 rounded-xl outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 🤝 学童チーム歓迎を選んだときの入力アシスタント */}
-              {eventId === 'welcome_kids' && (
-                <div className="mt-4 p-3.5 bg-brand-cream/40 rounded-2xl border border-brand-creamDark space-y-2 fade-in">
-                  <label className="block text-xs font-bold text-brand-red">
-                    🤝 来てくれた少年野球チームの名前
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={visitingTeam}
-                      onChange={e => setVisitingTeam(e.target.value)}
-                      placeholder="例：〇〇少年野球、〇〇ライオンズ"
-                      className="flex-1 p-2 bg-white border border-slate-200 rounded-xl outline-none text-xs"
-                    />
-                    <button
-                      type="button"
-                      onClick={applyTemplate}
-                      className="text-xs bg-brand-red text-white px-3 py-1.5 rounded-xl font-bold shrink-0"
-                    >
-                      文章に反映
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* 試合結果を選んだときのスコア入力お手伝い */}
-              {eventId === 'tournament' && (
-                <div className="mt-4 pt-3 border-t border-brand-cream">
+            <div className="grid grid-cols-1 gap-2.5">
+              {Object.keys(CTAS).map(k => {
+                const c = CTAS[k];
+                const isSelected = purpose === k;
+                return (
                   <button
+                    key={k}
                     type="button"
-                    onClick={() => setShowScoreInput(!showScoreInput)}
-                    className="text-xs sm:text-sm font-bold text-brand-red hover:underline flex items-center gap-1.5"
+                    onClick={() => setPurpose(k)}
+                    className={`p-3.5 text-left rounded-2xl border-2 flex items-start gap-3 transition-all active:scale-[0.99] ${
+                      isSelected
+                        ? 'border-cardMain bg-cardSub/40 text-cardMain ring-2 ring-cardMain/30'
+                        : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                    }`}
                   >
-                    <span>{showScoreInput ? '▲ 試合スコア入力を閉じる' : '▼ 試合のスコア・対戦校を簡単に入れる（任意）'}</span>
-                  </button>
-
-                  {showScoreInput && (
-                    <div className="mt-3 p-3.5 bg-brand-cream/30 rounded-2xl border border-brand-creamDark space-y-2.5 text-xs">
-                      <div>
-                        <label className="block text-brand-textMuted mb-1 font-semibold">球場・グラウンド名</label>
-                        <input
-                          type="text"
-                          placeholder="例：越谷市民球場"
-                          value={matchDetail.stadium}
-                          onChange={e => setMatchDetail({...matchDetail, stadium: e.target.value})}
-                          className="w-full p-2.5 bg-white border border-slate-200 rounded-xl outline-none"
-                        />
+                    <span className="text-xl shrink-0 mt-0.5">{c.icon}</span>
+                    <div className="min-w-0">
+                      <div className={`text-sm sm:text-base font-black ${isSelected ? 'text-cardMain' : 'text-stone-800'}`}>
+                        {c.label}
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-brand-textMuted mb-1 font-semibold">対戦相手チーム</label>
-                          <input
-                            type="text"
-                            placeholder="例：〇〇ボーイズ"
-                            value={matchDetail.opponent}
-                            onChange={e => setMatchDetail({...matchDetail, opponent: e.target.value})}
-                            className="w-full p-2.5 bg-white border border-slate-200 rounded-xl outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-brand-textMuted mb-1 font-semibold">スコア（越谷 - 相手）</label>
-                          <div className="flex items-center gap-1.5">
-                            <input
-                              type="text"
-                              placeholder="7"
-                              value={matchDetail.myScore}
-                              onChange={e => setMatchDetail({...matchDetail, myScore: e.target.value})}
-                              className="w-1/2 p-2.5 text-center bg-white border border-slate-200 rounded-xl outline-none font-bold"
-                            />
-                            <span className="font-bold text-slate-400">-</span>
-                            <input
-                              type="text"
-                              placeholder="3"
-                              value={matchDetail.opScore}
-                              onChange={e => setMatchDetail({...matchDetail, opScore: e.target.value})}
-                              className="w-1/2 p-2.5 text-center bg-white border border-slate-200 rounded-xl outline-none font-bold"
-                            />
-                          </div>
-                        </div>
+                      <div className="text-xs text-stone-500 mt-0.5">
+                        {c.sub}
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
-            </section>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
-            {/* ステップ 3: 伝えたい想い・本文 */}
-            <section className="bg-white rounded-3xl p-5 shadow-sm border border-brand-creamDark/60">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-8 h-8 rounded-2xl bg-brand-red text-brand-cream font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm">
-                    3
-                  </span>
-                  <div>
-                    <h2 className="font-bold text-brand-textMain text-base">文章の確認・手直し</h2>
-                    <p className="text-xs text-brand-textMuted">このままでOK！自由につけ足しても大丈夫です</p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const isFb = format === 'facebook';
-                    setCustomMemo(isFb ? currentEvent.templates.facebook : currentEvent.templates.insta);
-                  }}
-                  className="text-xs text-brand-red hover:underline font-semibold bg-brand-cream/60 px-2.5 py-1.5 rounded-xl shrink-0"
-                >
-                  文章をもとに戻す
-                </button>
-              </div>
-
-              <textarea
-                value={customMemo}
-                onChange={e => setCustomMemo(e.target.value)}
-                rows="6"
-                placeholder="ここに文章が入ります。自由に書き換えて使えます。"
-                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm leading-relaxed text-brand-textMain focus:bg-white focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none transition"
-              />
-
-              {/* 安心チェック表示 */}
-              {tipsDetected.length > 0 && (
-                <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs space-y-1 fade-in">
-                  <div className="font-bold text-amber-900 flex items-center gap-1.5">
-                    <span>💡</span> やさしい表現のワンポイントアドバイス
-                  </div>
-                  {tipsDetected.map((tip, idx) => (
-                    <p key={idx} className="text-slate-700 leading-relaxed">
-                      「<strong>{tip.word}</strong>」が入っています → <span className="text-amber-800 font-semibold">{tip.tip}</span>
-                    </p>
-                  ))}
-                </div>
-              )}
-
-              {/* お母さん安心マナーノート */}
-              <div className="mt-3 flex items-start gap-3 text-xs text-brand-textMuted bg-brand-cream/30 p-3 rounded-2xl border border-brand-cream">
-                <img
-                  src={MASCOT_IMG_SRC}
-                  onError={(e) => {
-                    if (e.target.src.indexOf('MASCOT_FALLBACK') === -1) {
-                      e.target.src = MASCOT_FALLBACK;
-                    }
-                  }}
-                  alt="マスコット"
-                  className="w-7 h-7 rounded-full bg-brand-cream p-0.5 shadow-sm shrink-0 mt-0.5 object-cover"
-                />
-                <span className="leading-relaxed">
-                  <strong>写真のワンポイント：</strong>相手チームの選手や、他の小学生の顔・ネームプレートが大きく写っている時は、スタンプ等で少し隠してあげると安心です。
-                </span>
-              </div>
-            </section>
-
-            {/* ステップ 4: 投稿の目的（最後の案内） */}
-            <section className="bg-white rounded-3xl p-5 shadow-sm border border-brand-creamDark/60">
-              <div className="flex items-center gap-2.5 mb-3.5">
-                <span className="w-8 h-8 rounded-2xl bg-brand-red text-brand-cream font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm">
-                  4
+          {/* 完成した投稿文プレビュー ＆ コピー */}
+          <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-stone-200 mb-6">
+            <div className="flex items-center justify-between border-b border-stone-100 pb-3 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">
+                  {format === 'facebook' ? '📘' : format === 'insta_reel' ? '🎬' : '📸'}
                 </span>
                 <div>
-                  <h2 className="font-bold text-brand-textMain text-base">最後に伝えたい一言（案内）</h2>
-                  <p className="text-xs text-brand-textMuted">読んだ人にどんなアクションをしてほしいですか？</p>
+                  <h3 className="font-black text-stone-800 text-sm sm:text-base">
+                    完成した文章（これを貼り付けます）
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    ハッシュタグや公式サイトへの案内も自動で入っています
+                  </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {Object.keys(CTAS).map(k => {
-                  const item = CTAS[k];
-                  const isSel = purpose === k;
-                  return (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => setPurpose(k)}
-                      className={`p-3.5 text-left rounded-2xl border-2 transition-all flex items-start gap-3 min-h-[64px] ${
-                        isSel
-                          ? 'border-brand-red bg-brand-cream/40 ring-2 ring-brand-red/20 font-bold text-brand-textMain'
-                          : 'border-slate-100 bg-white hover:border-brand-creamDark text-slate-700'
-                      }`}
-                    >
-                      <span className="text-2xl shrink-0 mt-0.5">{item.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs sm:text-sm font-bold leading-tight mb-0.5">{item.label}</div>
-                        <div className="text-[11px] text-brand-textMuted leading-tight">{item.sub}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* 選手カード選択時：SNS画像用カードプレビュー */}
-            {eventId === 'player_card' && (
-              <div className="bg-gradient-to-br from-brand-red to-brand-redDark text-white p-5 rounded-3xl shadow-md border-2 border-brand-cream space-y-3 fade-in">
-                <div className="flex items-center justify-between text-xs border-b border-brand-cream/20 pb-2">
-                  <span className="bg-brand-cream text-brand-red font-black px-2.5 py-0.5 rounded-full">
-                    Instagram画像・ストーリーズ用カード
-                  </span>
-                  <span className="text-brand-cream/80 text-[11px]">※スクショして画像に使えます</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <img
-                    src={MASCOT_IMG_SRC}
-                    onError={(e) => {
-                      if (e.target.src.indexOf('MASCOT_FALLBACK') === -1) {
-                        e.target.src = MASCOT_FALLBACK;
-                      }
-                    }}
-                    alt="マスコット"
-                    className="w-14 h-14 rounded-full bg-brand-cream p-1 shadow-md shrink-0 object-cover"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-black">{playerData.name || '選手名'}</span>
-                      <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{playerData.grade}</span>
-                    </div>
-                    <div className="text-xs text-brand-cream mt-0.5 font-bold">
-                      出身：{playerData.originTeam || '学童野球チーム名'}
-                    </div>
-                    <div className="text-xs text-brand-cream/90">
-                      守備位置：{playerData.position || 'ポジション'}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white/10 p-3 rounded-2xl border border-brand-cream/20 text-xs leading-relaxed text-brand-creamLight">
-                  <span className="font-bold text-brand-cream">後輩へのメッセージ：</span><br />
-                  「{playerData.comment || '一緒にキャッチボールしよう！'}」
-                </div>
-              </div>
-            )}
-
-            {/* 完成した投稿文プレビュー枠 */}
-            <section className="bg-white rounded-3xl shadow-md border border-brand-creamDark overflow-hidden">
-              <div className="bg-gradient-to-r from-brand-red to-brand-redDark text-white px-5 py-4 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xl">
-                    {format === 'facebook' ? '📘' : format === 'insta_reel' ? '🎬' : '📸'}
-                  </span>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-black">完成した投稿文</h3>
-                    <p className="text-[11px] text-brand-cream">
-                      {format === 'facebook' ? 'Facebook用（丁寧な報告調＋署名）' : 'Instagram用（親しみ＋ハッシュタグ付き）'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* PC表示用コピーボタン */}
-                <button
-                  type="button"
-                  onClick={() => doCopy(finalPostText)}
-                  className={`hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow transition transform active:scale-95 ${
-                    copied
-                      ? 'bg-emerald-600 text-white ring-2 ring-emerald-300'
-                      : 'bg-brand-cream text-brand-red hover:bg-white'
-                  }`}
-                >
-                  <span>{copied ? '✓ コピー完了！' : '📋 本文をコピー'}</span>
-                </button>
-              </div>
-
-              <div className="p-4 sm:p-5">
-                <pre className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed text-brand-textMain font-sans bg-brand-creamLight p-4 rounded-2xl border border-brand-cream max-h-[460px] overflow-y-auto select-all">
-                  {finalPostText}
-                </pre>
-
-                <div className="mt-3 flex items-center justify-between text-xs text-brand-textMuted px-1">
-                  <span>文字数：約 {finalPostText.length} 文字</span>
-                  <button
-                    type="button"
-                    onClick={() => doCopy(finalPostText)}
-                    className="text-brand-red font-bold underline"
-                  >
-                    もう一度コピーする
-                  </button>
-                </div>
-              </div>
-            </section>
-
-          </div>
-
-          {/* スマホ用：画面下に固定される大きなコピーボタン */}
-          <div className="sm:hidden fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-brand-creamDark shadow-2xl z-50">
-            <div className="max-w-3xl mx-auto flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => doCopy(finalPostText)}
-                className={`w-full py-3.5 px-4 rounded-2xl font-black text-base shadow-md flex items-center justify-center gap-2 transition transform active:scale-95 ${
-                  copied
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-brand-red text-white hover:bg-brand-redDark'
+                onClick={() => copyToClipboard('preview')}
+                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black text-white shadow-md active:scale-95 transition shrink-0 ${
+                  copiedKey === 'preview' ? 'bg-emerald-600' : 'bg-cardMain hover:opacity-90'
                 }`}
               >
-                <span className="text-lg">{copied ? '✓' : '📋'}</span>
-                <span>{copied ? 'コピーできました！アプリに貼るだけ' : '本文をコピーする（SNSに貼るだけ）'}</span>
+                {copiedKey === 'preview' ? '✓ コピー完了！' : '本文をコピー'}
+              </button>
+            </div>
+
+            <pre className="whitespace-pre-wrap text-xs sm:text-sm leading-relaxed text-stone-800 font-sans bg-[#FAF7F5] p-4 rounded-2xl border border-stone-200 select-all max-h-[380px] overflow-y-auto">
+              {finalPostText}
+            </pre>
+          </section>
+
+          {/* スマートフォン用：最下部固定コピーバー（安心の押しやすさ・セーフエリア対応） */}
+          <div className="fixed bottom-0 left-0 right-0 p-3.5 pb-safe bg-white/95 backdrop-blur-md border-t border-stone-200 shadow-2xl z-40 sm:hidden">
+            <div className="max-w-xl mx-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => copyToClipboard('bottom')}
+                className={`flex-1 py-4 px-4 rounded-2xl text-base font-black text-cardSub shadow-lg active:scale-95 transition flex items-center justify-center gap-2 ${
+                  copiedKey === 'bottom' ? 'bg-emerald-600' : 'bg-cardMain'
+                }`}
+              >
+                <span className="text-lg">📋</span>
+                <span>{copiedKey === 'bottom' ? '✓ コピー完了！SNSに貼るだけ' : '本文をコピーする（SNSに貼るだけ）'}</span>
               </button>
             </div>
           </div>
 
           {/* フッター */}
-          <footer className="mt-12 text-center text-xs text-brand-textMuted py-4 border-t border-brand-creamDark/60 space-y-1.5">
-            <p className="font-bold text-brand-textMain">
+          <footer className="mt-8 text-center text-xs sm:text-sm text-stone-500 py-3 space-y-1">
+            <p className="font-bold text-stone-700">
               越谷ボーイズ 広報サポート ／ 考えるを、ひとりにしない。
             </p>
-            <p className="text-[11px] text-brand-textMuted">
-              © NPO法人 越谷K・クラブ（越谷ボーイズ） SNS投稿メーカー
+            <p className="text-xs">
+              © NPO法人 越谷K・クラブ（越谷ボーイズ）
             </p>
           </footer>
 
