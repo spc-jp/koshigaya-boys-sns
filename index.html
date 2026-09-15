@@ -402,7 +402,7 @@
         <div className="max-w-3xl mx-auto px-3.5 py-4 sm:px-6 sm:py-8">
           
           {/* ヘッダーカード */}
-          <header className="bg-brand-red text-white rounded-3xl shadow-lg p-5 sm:p-7 mb-4 border-b-4 border-brand-redDark relative overflow-hidden">
+          <header className="bg-brand-red text-white rounded-3xl shadow-lg p-4 sm:p-7 mb-4 border-b-4 border-brand-redDark relative overflow-hidden">
             {/* リセット完了トースト通知 */}
             {showResetToast && (
               <div className="absolute top-3 right-3 bg-white text-brand-red font-bold text-xs px-3 py-1.5 rounded-full shadow-lg border border-brand-cream flex items-center gap-1.5 fade-in z-20">
@@ -411,16 +411,16 @@
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="bg-brand-cream text-brand-red font-bold text-xs px-3 py-1 rounded-full shadow-inner">
+            <div className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <span className="bg-brand-cream text-brand-red font-bold text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full shadow-inner">
                   中学硬式野球
                 </span>
-                <span className="text-xs text-brand-cream/90 font-medium">
+                <span className="text-[11px] sm:text-xs text-brand-cream/90 font-medium">
                   NPO法人 越谷K・クラブ
                 </span>
               </div>
-              <span className="bg-white/15 text-brand-cream text-xs px-3 py-1 rounded-full font-medium">
+              <span className="bg-white/15 text-brand-cream text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full font-medium">
                 広報サポート用
               </span>
             </div>
@@ -431,10 +431,10 @@
               role="button"
               tabIndex={0}
               title="タップすると最初の画面（初期状態）に戻ります"
-              className="flex items-center gap-3 sm:gap-6 cursor-pointer group transition transform active:scale-[0.98] select-none rounded-2xl p-1 -m-1 hover:bg-white/10"
+              className="flex items-center gap-2.5 sm:gap-5 cursor-pointer group transition transform active:scale-[0.98] select-none rounded-2xl p-1 -m-1 hover:bg-white/10"
             >
               <div className="shrink-0 relative">
-                <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-brand-cream p-1 shadow-md ring-2 ring-brand-cream/40 overflow-hidden flex items-center justify-center transition-transform group-hover:rotate-6 group-hover:scale-105">
+                <div className="w-11 h-11 min-[375px]:w-12 min-[375px]:h-12 sm:w-20 sm:h-20 rounded-full bg-brand-cream p-0.5 sm:p-1 shadow-md ring-2 ring-brand-cream/40 overflow-hidden flex items-center justify-center transition-transform group-hover:rotate-6 group-hover:scale-105">
                   <img
                     src={MASCOT_IMG_SRC}
                     onError={(e) => {
@@ -446,21 +446,24 @@
                     className="w-full h-full object-cover rounded-full"
                   />
                 </div>
-                <span className="absolute -bottom-1 -right-1 bg-brand-cream text-brand-red text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-full shadow border border-brand-red/30">
+                <span className="absolute -bottom-1 -right-1 bg-brand-cream text-brand-red text-[8px] sm:text-[10px] font-black px-1 py-0.2 sm:px-1.5 sm:py-0.5 rounded-full shadow border border-brand-red/30">
                   リセット
                 </span>
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-[15px] min-[375px]:text-base sm:text-2xl font-black tracking-tight whitespace-nowrap group-hover:text-brand-creamLight transition">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h1 
+                    style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all' }}
+                    className="text-[13px] min-[360px]:text-[14.5px] min-[390px]:text-[16px] sm:text-2xl font-black tracking-tighter sm:tracking-tight group-hover:text-brand-creamLight transition"
+                  >
                     越谷ボーイズ かんたん広報ノート
                   </h1>
                   <span className="text-[10px] bg-white/20 text-brand-cream px-2 py-0.5 rounded-full font-bold opacity-80 group-hover:opacity-100 transition hidden sm:inline-block">
                     🔄 タップで初期化
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-brand-cream/90 mt-1 leading-relaxed">
+                <p className="text-[11px] sm:text-sm text-brand-cream/90 mt-0.5 sm:mt-1 leading-snug sm:leading-relaxed">
                   選ぶだけでInstagram＆Facebookの投稿文が完成！「考えるを、ひとりにしない」応援ツールです。
                 </p>
               </div>
