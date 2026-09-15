@@ -10,9 +10,9 @@
   <meta property="og:description" content="考えるを、ひとりにしない。選ぶだけで1分でSNS投稿文＆プロ野球チップス風カード画像が完成！">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://spc-jp.github.io/koshigaya-boys-sns/">
-  <meta property="og:image" content="https://spc-jp.github.io/koshigaya-boys-sns/favicon.png">
-  <link rel="icon" type="image/png" href="https://spc-jp.github.io/koshigaya-boys-sns/favicon.png">
-  <link rel="apple-touch-icon" href="https://spc-jp.github.io/koshigaya-boys-sns/favicon.png">
+  <meta property="og:image" content="favicon.png">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -82,7 +82,9 @@
   <script type="text/babel">
     const { useState, useRef, useEffect } = React;
 
-    const MASCOT_URL = "https://spc-jp.github.io/koshigaya-boys-sns/favicon.png";
+    // ローカル配置（favicon.png）とGitHub Pages公開URLの自動フォールバック
+    const PRIMARY_MASCOT_URL = "favicon.png";
+    const FALLBACK_MASCOT_URL = "https://spc-jp.github.io/koshigaya-boys-sns/favicon.png";
 
     // 行事マスター（わかりやすいタイトルと説明）
     const EVENTS = [
@@ -212,6 +214,7 @@
       // 画像アップロード & Canvas
       const [uploadedImgUrl, setUploadedImgUrl] = useState(null);
       const [isCardSaving, setIsCardSaving] = useState(false);
+      const [mascotImgObj, setMascotImgObj] = useState(null);
       const canvasRef = useRef(null);
 
       // 自由入力・本文ステート
@@ -221,6 +224,18 @@
         setToastMsg(msg);
         setTimeout(() => setToastMsg(''), 2500);
       };
+
+      // マスコット画像の事前ロード（カード描画用）
+      useEffect(() => {
+        const mImg = new Image();
+        mImg.crossOrigin = "anonymous";
+        mImg.onload = () => setMascotImgObj(mImg);
+        mImg.onerror = () => {
+          // フォールバックURLから再読込
+          mImg.src = FALLBACK_MASCOT_URL;
+        };
+        mImg.src = PRIMARY_MASCOT_URL;
+      }, []);
 
       // 初回ダミー写真背景の生成
       useEffect(() => {
@@ -345,20 +360,37 @@
           ctx.fillStyle = '#FFFFFF';
           ctx.fill();
 
-          // 左上ロゴテキスト & スター刻印
+          // 左上：シラコバト公式エンブレムの描画（カードに本物のプロ仕様感を演出）
+          if (mascotImgObj) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(42, 54, 26, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = theme.accent;
+            ctx.stroke();
+            ctx.clip();
+            ctx.drawImage(mascotImgObj, 16, 28, 52, 52);
+            ctx.restore();
+          }
+
+          // 左上ロゴテキスト & スター刻印（エンブレムがある場合は位置を右に美しくオフセット）
+          const textOffsetX = mascotImgObj ? 48 : 0;
           ctx.fillStyle = theme.subText;
-          ctx.font = '900 24px "Noto Sans JP", sans-serif';
+          ctx.font = '900 21px "Noto Sans JP", sans-serif';
           ctx.textAlign = 'left';
-          ctx.fillText('KOSHIGAYA', 24, 46);
-          ctx.font = 'bold 13px sans-serif';
-          ctx.letterSpacing = '2.5px';
-          ctx.fillText('BOYS BASEBALL CARD', 26, 68);
+          ctx.fillText('KOSHIGAYA', 26 + textOffsetX, 44);
+          ctx.font = 'bold 11px sans-serif';
+          ctx.letterSpacing = '1.8px';
+          ctx.fillText('BOYS BASEBALL CARD', 28 + textOffsetX, 62);
 
           // 箔押し風刻印バッジ
           ctx.fillStyle = theme.accent;
-          ctx.font = 'bold 12px sans-serif';
-          ctx.letterSpacing = '1px';
-          ctx.fillText(theme.titleBadge, 26, 92);
+          ctx.font = 'bold 11px sans-serif';
+          ctx.letterSpacing = '0.8px';
+          ctx.fillText(theme.titleBadge, 26, 96);
           ctx.restore();
 
           // 3. 下部：カルビー風多層シャープカッティングフレーム
@@ -467,7 +499,7 @@
         if (document.fonts) {
           document.fonts.ready.then(() => renderCard());
         }
-      }, [uploadedImgUrl, number, nameEn, nameJa, position, handedness, grade, originTeam, cardTheme, eventId]);
+      }, [uploadedImgUrl, number, nameEn, nameJa, position, handedness, grade, originTeam, cardTheme, eventId, mascotImgObj]);
 
       // 行事切り替え時に下書き本文を自動セット
       useEffect(() => {
@@ -703,11 +735,15 @@
 
             {/* ロゴ ＆ タイトル */}
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-cardSub p-0.5 shadow shrink-0 overflow-hidden flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-cardSub p-0.5 shadow shrink-0 overflow-hidden flex items-center justify-center border-2 border-white/60">
                 <img
-                  src={MASCOT_URL}
-                  onError={(e) => { e.target.style.display = 'none'; }}
-                  alt="越谷ボーイズ"
+                  src={PRIMARY_MASCOT_URL}
+                  onError={(e) => {
+                    if (e.target.src !== FALLBACK_MASCOT_URL) {
+                      e.target.src = FALLBACK_MASCOT_URL;
+                    }
+                  }}
+                  alt="越谷ボーイズ シラコバト"
                   className="w-full h-full object-cover rounded-full"
                 />
               </div>
