@@ -10,9 +10,9 @@
   <meta property="og:description" content="考えるを、ひとりにしない。選ぶだけで1分でSNS投稿文＆プロ野球チップス風カード画像が完成！">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://spc-jp.github.io/koshigaya-boys-sns/">
-  <meta property="og:image" content="favicon.png">
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="apple-touch-icon" href="favicon.png">
+  <meta property="og:image" content="favicon.png?v=2026">
+  <link rel="icon" type="image/png" href="favicon.png?v=2026">
+  <link rel="apple-touch-icon" href="favicon.png?v=2026">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -82,18 +82,32 @@
   <script type="text/babel">
     const { useState, useRef, useEffect } = React;
 
-    // ローカル配置（favicon.png）とGitHub Pages公開URLの自動フォールバック
-    const PRIMARY_MASCOT_URL = "favicon.png";
-    const FALLBACK_MASCOT_URL = "https://spc-jp.github.io/koshigaya-boys-sns/favicon.png";
+    // ローカル配置（favicon.png）とGitHub Pages公開URLの自動フォールバック（キャッシュ回避パラメータ付き）
+    const PRIMARY_MASCOT_URL = "favicon.png?v=2026";
+    const FALLBACK_MASCOT_URL = "https://spc-jp.github.io/koshigaya-boys-sns/favicon.png?v=2026";
 
-    // 行事マスター（わかりやすいタイトルと説明）
+    // 行事マスター（よく使う順に配置・7と8を入れ替え）
     const EVENTS = [
+      {
+        id: 'tournament',
+        title: '🏆 大会・公式戦の試合結果',
+        badge: '試合速報',
+        desc: '粘りの好ゲーム・全員野球の熱いドラマと応援への御礼',
+        isSpecial: false
+      },
       {
         id: 'player',
         title: '🌟 今週のキラリ選手紹介',
         badge: '一番人気！',
         desc: '写真1枚でプロ野球カード画像＆紹介文を同時に作成できます',
         isSpecial: true
+      },
+      {
+        id: 'practice',
+        title: '👟 普段の練習風景（凡事徹底）',
+        badge: 'チーム方針',
+        desc: '大きな挨拶・道具磨き・全力疾走・高校へつなぐ基礎指導',
+        isSpecial: false
       },
       {
         id: 'experience',
@@ -110,24 +124,10 @@
         isSpecial: false
       },
       {
-        id: 'tournament',
-        title: '🏆 大会・公式戦の試合結果',
-        badge: '試合速報',
-        desc: '粘りの好ゲーム・全員野球の熱いドラマと応援への御礼',
-        isSpecial: false
-      },
-      {
         id: 'daily_schedule',
         title: '⏰ 越谷ボーイズのある週末の1日',
         badge: 'お母さん安心',
         desc: '土日の時間割やお茶当番の負担軽減を伝えて不安を解消',
-        isSpecial: false
-      },
-      {
-        id: 'practice',
-        title: '👟 普段の練習風景（凡事徹底）',
-        badge: 'チーム方針',
-        desc: '大きな挨拶・道具磨き・全力疾走・高校へつなぐ基礎指導',
         isSpecial: false
       },
       {
@@ -191,14 +191,16 @@
     ];
 
     const App = () => {
-      // 選択ステート
-      const [eventId, setEventId] = useState('player');
+      // 選択ステート（一番上の試合結果を初期選択）
+      const [eventId, setEventId] = useState('tournament');
       const [format, setFormat] = useState('insta_feed');
       const [purpose, setPurpose] = useState('experience');
       const [showGuide, setShowGuide] = useState(false);
       const [showResetConfirm, setShowResetConfirm] = useState(false);
       const [toastMsg, setToastMsg] = useState('');
       const [copiedKey, setCopiedKey] = useState('');
+      // ★ コピー後の次アクション案内ポップアップ
+      const [showPostCopyModal, setShowPostCopyModal] = useState(false);
 
       // 選手カード専用ステート
       const [cardTheme, setCardTheme] = useState('gold'); // 'gold' | 'navy' | 'classic'
@@ -216,6 +218,15 @@
       const [isCardSaving, setIsCardSaving] = useState(false);
       const [mascotImgObj, setMascotImgObj] = useState(null);
       const canvasRef = useRef(null);
+
+      // ★ 公式戦・試合結果 専用ステート
+      const [tournamentName, setTournamentName] = useState('第〇回 日本少年野球 支部予選');
+      const [stadiumName, setStadiumName] = useState('越谷市民球場');
+      const [opponentName, setOpponentName] = useState('草加ボーイズ');
+      const [myScore, setMyScore] = useState('6');
+      const [opponentScore, setOpponentScore] = useState('4');
+      const [matchMood, setMatchMood] = useState('win'); // 'win' | 'good' | 'lose'
+      const [matchHighlight, setMatchHighlight] = useState('最終回の満塁のピンチを、全員の気迫と好守備で守り抜きました！');
 
       // 自由入力・本文ステート
       const [customMemo, setCustomMemo] = useState('');
@@ -515,6 +526,40 @@
 `🌟【今週のキラリ選手紹介！】⚾️✨\n越谷ボーイズの仲間を紹介します！\n\n📸 1枚目の限定選手カードもぜひ見てね！\n━━━━━━━━━━━━━━━\n■ 背番号：#${number || '00'}\n■ 選手名：${nameJa} 選手（${nameEn}）\n■ 学年・ポジション：${grade} / ${position}（${handedness}）\n■ 出身学童チーム：★${originTeam}★\n━━━━━━━━━━━━━━━\n\n🗣 選手から小学生の後輩たちへ一言！\n「${playerMessage}」\n\nグラウンドでの元気な声と、道具をピカピカに磨く姿が光っています👟✨\n先輩の背中を追って、ぜひグラウンドへ気軽に遊びに来てくださいね！🙌`
             );
           }
+        } else if (eventId === 'tournament') {
+          const sKoshigaya = myScore.trim() || '0';
+          const sOpp = opponentScore.trim() || '0';
+          const opp = opponentName.trim() || '〇〇ボーイズ';
+          const tName = tournamentName.trim() || '公式戦';
+          const stadium = stadiumName.trim() ? `（会場：${stadiumName.trim()}）` : '';
+
+          let moodTitleInsta = '';
+          let moodBodyInsta = '';
+          let moodBodyFb = '';
+
+          if (matchMood === 'win') {
+            moodTitleInsta = `🏆【公式戦勝利！】粘りの全員野球で掴んだ白星！⚾️🔥`;
+            moodBodyInsta = `序盤から息詰まる攻防となりましたが、最後までベンチもスタンドも声を掛け合い、見事勝利を掴み取りました！✨\n${matchHighlight ? `\n🔥 本日のハイライト：\n「${matchHighlight}」\n` : ''}\n一戦ごとに頼もしく成長していく選手たちへ、次戦も熱い応援をよろしくお願いいたします！`;
+            moodBodyFb = `緊迫した展開のなか、選手たちは日頃の練習の成果を発揮し、粘り強い全員野球で勝利を収めました。\n${matchHighlight ? `本日のハイライト：「${matchHighlight}」\n` : ''}次戦に向けて気を引き締め、さらなるチーム力の向上に励んでまいります。`;
+          } else if (matchMood === 'lose') {
+            moodTitleInsta = `🔥【公式戦結果】最後まで戦い抜いた熱戦！次への糧に⚾️`;
+            moodBodyInsta = `最後まで諦めず、泥だらけになりながら白球を追い続けました！\n結果は惜敗となりましたが、随所に光るプレーと大きな成長が見られた好ゲームでした。${matchHighlight ? `\n\n💬 今日のナイスプレー：\n「${matchHighlight}」\n` : ''}\nこの悔しさを必ず次の成長へ繋げます。最後まで温かい拍手をありがとうございました！`;
+            moodBodyFb = `最後まで全員で声を掛け合い全力を尽くしましたが、惜しくも一歩及ばず敗戦となりました。\n${matchHighlight ? `試合のポイント：「${matchHighlight}」\n` : ''}この経験から得た課題を真摯に受け止め、次の勝利へ向けて日々の練習（凡事徹底）に励んでまいります。`;
+          } else {
+            moodTitleInsta = `⚾️【公式戦結果】全員野球で挑んだ白熱の好ゲーム！✨`;
+            moodBodyInsta = `互いに譲らない緊迫した攻防が続きました！\n選手たちはグラウンド・ベンチが一丸となって最後まで全力疾走・全力プレーを貫きました。${matchHighlight ? `\n\n✨ 印象的なワンシーン：\n「${matchHighlight}」\n` : ''}\n朝早くから会場で熱い声援を送ってくださった皆様、本当にありがとうございました！`;
+            moodBodyFb = `互いの意地がぶつかり合う白熱した好ゲームとなりました。選手たちは最後まで集中力を切らさず、チーム一丸となって戦い抜きました。\n${matchHighlight ? `印象的なシーン：「${matchHighlight}」\n` : ''}引き続き温かいご支援をよろしくお願い申し上げます。`;
+          }
+
+          if (isFb) {
+            setCustomMemo(
+`【公式戦 試合結果のご報告】\n\n本日行われました公式戦の試合結果をご報告いたします。\n\n━━━━━━━━━━━━━━━━━\n■ 大会名：${tName}\n■ 試合会場：${stadiumName || '公式球場'}\n■ 対戦カード：越谷ボーイズ vs ${opp}\n■ 試合結果：越谷ボーイズ ${sKoshigaya} - ${sOpp} ${opp}\n━━━━━━━━━━━━━━━━━\n\n${moodBodyFb}\n\n対戦いただいた${opp}の皆様、ならびに大会関係者・審判員の皆様に深く御礼申し上げます。`
+            );
+          } else {
+            setCustomMemo(
+`${moodTitleInsta}\n本日行われた公式戦の結果をお知らせします！\n\n━━━━━━━━━━━━━━━\n■ 大会：${tName}\n■ スコア：越谷ボーイズ ${sKoshigaya} - ${sOpp} ${opp} ${stadium}\n━━━━━━━━━━━━━━━\n\n${moodBodyInsta}\n\n対戦いただいた${opp}の皆様、大会運営関係者の皆様、ありがとうございました！🙌`
+            );
+          }
         } else if (eventId === 'experience') {
           setCustomMemo(
             isFb
@@ -558,7 +603,7 @@
               : `🤝【選手たちの笑顔を支える強力な応援団！】✨\nいつも選手たちが思いきり白球を追えるよう、温かく見守り支えてくれる保護者の皆様、本当にありがとうございます！\n\n越谷ボーイズでは、保護者の当番負担を減らしながら、無理のない範囲で笑顔で協力し合う環境づくりを進めています😊 グラウンドに広がる温かい声援が選手たちの一番のエネルギーです！⚾️`
           );
         }
-      }, [eventId, format, number, nameJa, nameEn, grade, position, originTeam, playerMessage]);
+      }, [eventId, format, number, nameJa, nameEn, grade, position, originTeam, playerMessage, tournamentName, stadiumName, opponentName, myScore, opponentScore, matchMood, matchHighlight]);
 
       // 写真ファイル選択
       const handlePhotoSelect = (e) => {
@@ -626,7 +671,8 @@
       const copyToClipboard = (key = 'main') => {
         const done = () => {
           setCopiedKey(key);
-          showToast('✓ 本文をコピーしました！SNSに貼るだけです');
+          showToast('✓ 本文をコピーしました！');
+          setShowPostCopyModal(true); // コピー完了後に次の案内モーダルを表示
           setTimeout(() => setCopiedKey(''), 2200);
         };
 
@@ -653,9 +699,15 @@
         document.body.removeChild(el);
       };
 
+      // ページ一番上へスムーズスクロール
+      const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setShowPostCopyModal(false);
+      };
+
       // 安全な全体初期化リセット（確認モーダル経由）
       const handleConfirmReset = () => {
-        setEventId('player');
+        setEventId('tournament');
         setFormat('insta_feed');
         setPurpose('experience');
         setCardTheme('gold');
@@ -667,6 +719,13 @@
         setGrade('中学2年');
         setOriginTeam('越谷ライオンズ出身');
         setPlayerMessage('僕も小6の秋は硬式球にドキドキしたけど、先輩たちが優しく教えてくれてすぐ慣れました！まずは気軽にキャッチボールしに来てください！');
+        setTournamentName('第〇回 日本少年野球 支部予選');
+        setStadiumName('越谷市民球場');
+        setOpponentName('草加ボーイズ');
+        setMyScore('6');
+        setOpponentScore('4');
+        setMatchMood('win');
+        setMatchHighlight('最終回の満塁のピンチを、全員の気迫と好守備で守り抜きました！');
         setShowResetConfirm(false);
         showToast('最初に戻しました 🔄');
       };
@@ -682,6 +741,71 @@
             <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-cardMain text-cardSub px-5 py-3 rounded-full font-bold text-sm shadow-2xl border border-cardSub z-50 fade-in flex items-center gap-2">
               <span className="text-base">⚾️</span>
               <span>{toastMsg}</span>
+            </div>
+          )}
+
+          {/* ★ コピー完了後の次のアクション案内モーダル（お母さん安心設計） */}
+          {showPostCopyModal && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 fade-in">
+              <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-2 border-emerald-500 text-center relative">
+                {/* 閉じる×ボタン */}
+                <button
+                  type="button"
+                  onClick={() => setShowPostCopyModal(false)}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-stone-100 text-stone-500 font-bold flex items-center justify-center hover:bg-stone-200"
+                >
+                  ✕
+                </button>
+
+                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 text-3xl flex items-center justify-center mx-auto mb-3 shadow-inner">
+                  ✓
+                </div>
+
+                <h3 className="text-lg font-black text-stone-800 mb-1">
+                  コピーできました！
+                </h3>
+                <p className="text-xs text-stone-600 mb-5 leading-relaxed">
+                  文章は記憶されています。<br />
+                  アプリを開いて「貼り付け（ペースト）」するだけです！
+                </p>
+
+                <div className="space-y-2.5">
+                  {/* アプリを開くボタン（フォーマットに応じて自動切り替え） */}
+                  {format === 'facebook' ? (
+                    <a
+                      href="https://www.facebook.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setShowPostCopyModal(false)}
+                      className="w-full py-3.5 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm sm:text-base shadow-lg active:scale-95 transition flex items-center justify-center gap-2"
+                    >
+                      <span className="text-xl">📘</span>
+                      <span>Facebookを開いて貼り付ける</span>
+                    </a>
+                  ) : (
+                    <a
+                      href="https://www.instagram.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setShowPostCopyModal(false)}
+                      className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white font-black text-sm sm:text-base shadow-lg active:scale-95 transition flex items-center justify-center gap-2"
+                    >
+                      <span className="text-xl">📸</span>
+                      <span>Instagramを開いて貼り付ける</span>
+                    </a>
+                  )}
+
+                  {/* 画面の一番上へ戻るボタン */}
+                  <button
+                    type="button"
+                    onClick={scrollToTop}
+                    className="w-full py-3 px-4 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5"
+                  >
+                    <span>⬆️</span>
+                    <span>続けて別の投稿を作る（一番上へ戻る）</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1075,6 +1199,175 @@
                     value={playerMessage}
                     onChange={e => setPlayerMessage(e.target.value)}
                     placeholder="例：僕も最初は硬式にドキドキしたけど、すぐ慣れたよ！"
+                    className="w-full p-2.5 bg-white border border-stone-300 rounded-xl text-xs sm:text-sm leading-relaxed outline-none focus:border-cardMain"
+                  />
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* ★【新登場連動エリア】大会・公式戦が選ばれている時に展開する「公式戦スコア簡単シート」 */}
+          {eventId === 'tournament' && (
+            <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-md border-2 border-cardMain mb-4 fade-in">
+              <div className="border-b border-stone-200 pb-3 mb-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🏆</span>
+                    <h2 className="font-black text-cardMain text-base sm:text-lg">
+                      公式戦・試合結果 かんたん入力シート
+                    </h2>
+                  </div>
+                  <span className="bg-cardMain text-cardSub text-xs font-black px-2.5 py-1 rounded-full shrink-0 shadow-sm">
+                    スコア連動
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-stone-600 mt-1">
+                  枠をうめるだけで、InstagramとFacebook両方の完璧な速報文が自動完成します
+                </p>
+              </div>
+
+              {/* 試合の雰囲気・勝敗をワンタップで選ぶボタン */}
+              <div className="mb-4">
+                <label className="block text-xs sm:text-sm font-black text-stone-800 mb-2 flex items-center gap-1.5">
+                  <span>⚡️</span>
+                  <span>どんな試合でしたか？（タップで文章が自動変化）</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMatchMood('win')}
+                    className={`py-2.5 px-2 rounded-2xl border-2 font-black text-xs sm:text-sm flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                      matchMood === 'win'
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-400 shadow-md'
+                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span className="text-lg">🎉</span>
+                    <span>歓喜の勝利！</span>
+                    <span className="text-[10px] text-emerald-700 font-bold">全員で掴んだ白星</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setMatchMood('good')}
+                    className={`py-2.5 px-2 rounded-2xl border-2 font-black text-xs sm:text-sm flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                      matchMood === 'good'
+                        ? 'border-blue-600 bg-blue-50 text-blue-950 ring-2 ring-blue-400 shadow-md'
+                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span className="text-lg">🤝</span>
+                    <span>全員の好ゲーム</span>
+                    <span className="text-[10px] text-blue-700 font-bold">白熱の熱戦・引分</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setMatchMood('lose')}
+                    className={`py-2.5 px-2 rounded-2xl border-2 font-black text-xs sm:text-sm flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                      matchMood === 'lose'
+                        ? 'border-amber-600 bg-amber-50 text-amber-950 ring-2 ring-amber-400 shadow-md'
+                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span className="text-lg">💪</span>
+                    <span>惜敗・次へ前進</span>
+                    <span className="text-[10px] text-amber-700 font-bold">悔しさをバネに</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 穴埋め入力フォーム */}
+              <div className="bg-[#FAF7F5] p-4 rounded-2xl border border-stone-200 space-y-3.5">
+                
+                {/* 大会名 ＆ 試合会場 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">
+                      大会名
+                    </label>
+                    <input
+                      type="text"
+                      value={tournamentName}
+                      onChange={e => setTournamentName(e.target.value)}
+                      placeholder="例：第〇回 日本少年野球 支部予選"
+                      className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-bold outline-none focus:border-cardMain"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">
+                      試合会場（球場名）
+                    </label>
+                    <input
+                      type="text"
+                      value={stadiumName}
+                      onChange={e => setStadiumName(e.target.value)}
+                      placeholder="例：越谷市民球場"
+                      className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-bold outline-none focus:border-cardMain"
+                    />
+                  </div>
+                </div>
+
+                {/* スコア・対戦相手（大きく見やすい専用ボード風） */}
+                <div className="bg-white p-3.5 rounded-2xl border-2 border-stone-300">
+                  <label className="block font-black text-stone-800 mb-2 text-xs sm:text-sm text-center">
+                    ⚾️ 試合スコア・対戦カード
+                  </label>
+                  
+                  <div className="flex items-center justify-between gap-2">
+                    {/* 越谷ボーイズ */}
+                    <div className="flex-1 text-center">
+                      <div className="font-black text-cardMain text-xs sm:text-sm mb-1 truncate">
+                        越谷ボーイズ
+                      </div>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={myScore}
+                        onChange={e => setMyScore(e.target.value)}
+                        placeholder="6"
+                        className="w-full max-w-[80px] mx-auto p-2 text-2xl sm:text-3xl font-black text-center bg-[#FAF7F5] border-2 border-cardMain rounded-xl outline-none"
+                      />
+                    </div>
+
+                    <div className="text-xl sm:text-2xl font-black text-stone-400 px-1">
+                      ー
+                    </div>
+
+                    {/* 対戦相手 */}
+                    <div className="flex-1 text-center">
+                      <div className="mb-1">
+                        <input
+                          type="text"
+                          value={opponentName}
+                          onChange={e => setOpponentName(e.target.value)}
+                          placeholder="草加ボーイズ"
+                          className="w-full p-1 text-xs sm:text-sm font-black text-center border-b border-stone-300 bg-transparent outline-none focus:border-cardMain truncate"
+                        />
+                      </div>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={opponentScore}
+                        onChange={e => setOpponentScore(e.target.value)}
+                        placeholder="4"
+                        className="w-full max-w-[80px] mx-auto p-2 text-2xl sm:text-3xl font-black text-center bg-[#FAF7F5] border-2 border-stone-400 rounded-xl outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 今日のハイライト・一言 */}
+                <div className="text-sm">
+                  <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm flex items-center justify-between">
+                    <span>💬 今日のハイライト・ナイスプレー（一言メモ）</span>
+                    <span className="text-[11px] text-stone-500 font-normal">空欄でもOK</span>
+                  </label>
+                  <textarea
+                    rows="2"
+                    value={matchHighlight}
+                    onChange={e => setMatchHighlight(e.target.value)}
+                    placeholder="例：最終回の満塁のピンチを、全員の気迫と好守備で守り抜きました！"
                     className="w-full p-2.5 bg-white border border-stone-300 rounded-xl text-xs sm:text-sm leading-relaxed outline-none focus:border-cardMain"
                   />
                 </div>
