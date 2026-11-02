@@ -868,7 +868,7 @@
             </div>
           </header>
 
-          {/* ★ チーム選択プルダウンカード */}
+          {/* ★ チーム選択プルダウンカード（最上部） */}
           <div className="bg-white rounded-3xl p-3.5 sm:p-4 border-2 border-cardMain/40 shadow-sm mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-xl shrink-0">🧢</span>
@@ -1321,9 +1321,23 @@
                   </label>
                   
                   <div className="flex items-center justify-between gap-2">
+                    {/* 自チーム：プルダウン選択式 */}
                     <div className="flex-1 text-center">
-                      <div className="font-black text-cardMain text-xs sm:text-sm mb-1 truncate">
-                        {teamName}
+                      <div className="mb-1">
+                        <div className="relative inline-block w-full">
+                          <select
+                            value={teamKey}
+                            onChange={(e) => setTeamKey(e.target.value)}
+                            className="w-full appearance-none bg-stone-50 hover:bg-stone-100 border border-cardMain/60 text-cardMain font-black text-xs sm:text-sm py-1 pl-2 pr-6 rounded-lg outline-none cursor-pointer text-center truncate"
+                            title="タップしてチームを切り替え"
+                          >
+                            <option value="koshigaya">越谷ボーイズ</option>
+                            <option value="chuo">越谷中央ボーイズ</option>
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-cardMain text-[10px] font-bold">
+                            ▼
+                          </div>
+                        </div>
                       </div>
                       <input
                         type="number"
@@ -1339,6 +1353,7 @@
                       ー
                     </div>
 
+                    {/* 対戦相手チーム */}
                     <div className="flex-1 text-center">
                       <div className="mb-1">
                         <input
