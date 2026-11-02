@@ -10,9 +10,9 @@
   <meta property="og:description" content="考えるを、ひとりにしない。選ぶだけで1分でSNS投稿文＆プロ野球チップス風カード画像が完成！">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://spc-jp.github.io/koshigaya-boys-sns/">
-  <meta property="og:image" content="favicon.png?v=2026">
-  <link rel="icon" type="image/png" href="favicon.png?v=2026">
-  <link rel="apple-touch-icon" href="favicon.png?v=2026">
+  <meta property="og:image" content="team-logo.png?v=2026">
+  <link rel="icon" type="image/png" href="team-logo.png?v=2026">
+  <link rel="apple-touch-icon" href="team-logo.png?v=2026">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -77,9 +77,10 @@
   <script type="text/babel">
     const { useState, useRef, useEffect } = React;
 
-    // ローカル配置（favicon.png）とGitHub Pages公開URLの自動フォールバック
-    const PRIMARY_MASCOT_URL = "favicon.png?v=2026";
-    const FALLBACK_MASCOT_URL = "https://spc-jp.github.io/koshigaya-boys-sns/favicon.png?v=2026";
+    // チーム新ロゴ（team-logo.png または favicon.png）
+    const PRIMARY_TEAM_LOGO = "team-logo.png?v=2026";
+    const SECONDARY_TEAM_LOGO = "favicon.png?v=2026";
+    const FALLBACK_TEAM_LOGO = "https://spc-jp.github.io/koshigaya-boys-sns/team-logo.png?v=2026";
 
     // 体験案内固定URL & 理念URL & スポンサー企業URL
     const ENTRY_URL = "https://www.koshigayaboys.com/entry/";
@@ -199,7 +200,7 @@
       // 画像アップロード & Canvas
       const [uploadedImgUrl, setUploadedImgUrl] = useState(null);
       const [isCardSaving, setIsCardSaving] = useState(false);
-      const [mascotImgObj, setMascotImgObj] = useState(null);
+      const [teamLogoImgObj, setTeamLogoImgObj] = useState(null);
       const canvasRef = useRef(null);
 
       // 公式戦・試合結果 専用ステート
@@ -219,15 +220,24 @@
         setTimeout(() => setToastMsg(''), 2500);
       };
 
-      // マスコット画像の事前ロード
+      // チームロゴ画像の事前ロード（team-logo.png -> favicon.png -> fallback の順）
       useEffect(() => {
-        const mImg = new Image();
-        mImg.crossOrigin = "anonymous";
-        mImg.onload = () => setMascotImgObj(mImg);
-        mImg.onerror = () => {
-          mImg.src = FALLBACK_MASCOT_URL;
+        const logoImg = new Image();
+        logoImg.crossOrigin = "anonymous";
+        logoImg.onload = () => setTeamLogoImgObj(logoImg);
+        logoImg.onerror = () => {
+          const secondImg = new Image();
+          secondImg.crossOrigin = "anonymous";
+          secondImg.onload = () => setTeamLogoImgObj(secondImg);
+          secondImg.onerror = () => {
+            const thirdImg = new Image();
+            thirdImg.crossOrigin = "anonymous";
+            thirdImg.onload = () => setTeamLogoImgObj(thirdImg);
+            thirdImg.src = FALLBACK_TEAM_LOGO;
+          };
+          secondImg.src = SECONDARY_TEAM_LOGO;
         };
-        mImg.src = PRIMARY_MASCOT_URL;
+        logoImg.src = PRIMARY_TEAM_LOGO;
       }, []);
 
       // 初回ダミー背景生成
@@ -264,7 +274,7 @@
         setUploadedImgUrl(dummyCanvas.toDataURL());
       }, []);
 
-      // Canvasカード描画（選択チーム名連動）
+      // Canvasカード描画（KBロゴ連動）
       const renderCard = () => {
         if (!uploadedImgUrl) return;
         const canvas = canvasRef.current;
@@ -347,10 +357,11 @@
           ctx.fillStyle = '#FFFFFF';
           ctx.fill();
 
-          if (mascotImgObj) {
+          // チームKBロゴ描画
+          if (teamLogoImgObj) {
             ctx.save();
             ctx.beginPath();
-            ctx.arc(42, 54, 26, 0, Math.PI * 2);
+            ctx.arc(42, 54, 27, 0, Math.PI * 2);
             ctx.closePath();
             ctx.fillStyle = '#FFFFFF';
             ctx.fill();
@@ -358,11 +369,11 @@
             ctx.strokeStyle = theme.accent;
             ctx.stroke();
             ctx.clip();
-            ctx.drawImage(mascotImgObj, 16, 28, 52, 52);
+            ctx.drawImage(teamLogoImgObj, 15, 27, 54, 54);
             ctx.restore();
           }
 
-          const textOffsetX = mascotImgObj ? 48 : 0;
+          const textOffsetX = teamLogoImgObj ? 48 : 0;
           ctx.fillStyle = theme.subText;
           ctx.font = '900 19px "Noto Sans JP", sans-serif';
           ctx.textAlign = 'left';
@@ -470,7 +481,7 @@
         if (document.fonts) {
           document.fonts.ready.then(() => renderCard());
         }
-      }, [uploadedImgUrl, number, nameEn, nameJa, position, handedness, grade, originTeam, cardTheme, eventId, mascotImgObj, teamKey]);
+      }, [uploadedImgUrl, number, nameEn, nameJa, position, handedness, grade, originTeam, cardTheme, eventId, teamLogoImgObj, teamKey]);
 
       // 行事・チーム切り替え時の下書き生成
       useEffect(() => {
@@ -821,7 +832,7 @@
             </div>
           )}
 
-          {/* ヘッダーカード */}
+          {/* ヘッダーカード（KB新エンブレムロゴ） */}
           <header className="bg-cardMain text-cardSub rounded-3xl shadow-md p-4 sm:p-5 mb-4 border-b-4 border-[#8B3738] relative overflow-hidden">
             <div className="flex items-center justify-between gap-2 mb-3">
               <span className="bg-cardSub text-cardMain text-xs font-black px-3 py-1 rounded-full shadow-inner tracking-wider">
@@ -838,16 +849,18 @@
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-cardSub p-0.5 shadow shrink-0 overflow-hidden flex items-center justify-center border-2 border-white/60">
+              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-white p-1 shadow-md shrink-0 overflow-hidden flex items-center justify-center border-2 border-white/80">
                 <img
-                  src={PRIMARY_MASCOT_URL}
+                  src={PRIMARY_TEAM_LOGO}
                   onError={(e) => {
-                    if (e.target.src !== FALLBACK_MASCOT_URL) {
-                      e.target.src = FALLBACK_MASCOT_URL;
+                    if (e.target.src.indexOf(SECONDARY_TEAM_LOGO) === -1 && e.target.src.indexOf(FALLBACK_TEAM_LOGO) === -1) {
+                      e.target.src = SECONDARY_TEAM_LOGO;
+                    } else if (e.target.src !== FALLBACK_TEAM_LOGO) {
+                      e.target.src = FALLBACK_TEAM_LOGO;
                     }
                   }}
-                  alt="越谷ボーイズ シラコバト"
-                  className="w-full h-full object-cover rounded-full"
+                  alt="越谷ボーイズ KB公式ロゴ"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -861,7 +874,7 @@
                 >
                   越谷ボーイズ / 越谷中央ボーイズ
                 </h1>
-                <p className="text-xs text-cardSub/90 mt-1 font-bold">
+                <p className="text-xs text-cardSub/90 mt-1.5 font-bold">
                   かんたん広報ノート ＆ 野球カードメーカー
                 </p>
               </div>
@@ -1297,7 +1310,7 @@
                       type="text"
                       value={tournamentName}
                       onChange={e => setTournamentName(e.target.value)}
-                      placeholder="例：第〇回 日本少年野球 支部予選"
+                      placeholder="例：第〇回 日本少年野球 支部予セ"
                       className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-bold outline-none focus:border-cardMain"
                     />
                   </div>
@@ -1649,10 +1662,10 @@
             </div>
           </div>
 
-          {/* ★ スポンサー募集枠 ＆ オフィシャルサポーター紹介フッター（案1・案2の融合型） */}
+          {/* ★ スポンサー募集枠 ＆ オフィシャルサポーター紹介フッター */}
           <aside className="mt-8 mb-4 bg-white rounded-3xl p-4 sm:p-5 border-2 border-stone-200 shadow-sm space-y-4">
             
-            {/* 1. スポンサー（協賛企業）募集のご案内枠（案1＋案2） */}
+            {/* 1. スポンサー（協賛企業）募集のご案内枠 */}
             <div className="bg-gradient-to-br from-amber-50/70 via-stone-50 to-orange-50/50 rounded-2xl p-4 border border-amber-300 shadow-sm">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-400 text-stone-900 rounded-full text-[11px] font-black shadow-sm">
@@ -1695,7 +1708,7 @@
               </div>
             </div>
 
-            {/* 2. 現在のOFFICIAL PARTNER表示（ご要望のイメージを完全キープ） */}
+            {/* 2. 現在のOFFICIAL PARTNER表示 */}
             <div>
               <div className="text-center mb-3">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-full text-xs font-black tracking-wide">
@@ -1716,7 +1729,6 @@
                 className="group block bg-[#FAF7F5] hover:bg-white rounded-2xl p-3.5 sm:p-4 border border-stone-200 hover:border-blue-500 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
               >
                 <div className="flex items-center gap-3.5">
-                  {/* ロゴ表示エリア：画像読み込み優先＋フォールバック */}
                   <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl p-2 shadow-sm border border-stone-200 flex items-center justify-center shrink-0 overflow-hidden">
                     <img
                       src={PRIMARY_SPC_LOGO}
@@ -1730,7 +1742,6 @@
                     />
                   </div>
 
-                  {/* 企業情報テキスト */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <span className="text-[10px] sm:text-xs font-black text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
