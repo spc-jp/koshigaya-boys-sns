@@ -10,9 +10,12 @@
   <meta property="og:description" content="考えるを、ひとりにしない。選ぶだけで1分でSNS投稿文＆プロ野球チップス風カード画像が完成！">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://spc-jp.github.io/koshigaya-boys-sns/">
-  <meta property="og:image" content="team-logo.png?v=2026">
-  <link rel="icon" type="image/png" href="team-logo.png?v=2026">
-  <link rel="apple-touch-icon" href="team-logo.png?v=2026">
+  <meta property="og:image" content="team-logo.png?v=20261103">
+  
+  <!-- GitHubに配置された team-logo.png を最優先 favicon として登録（キャッシュ対策パラメータ付き） -->
+  <link rel="icon" type="image/png" href="team-logo.png?v=20261103">
+  <link rel="shortcut icon" href="team-logo.png?v=20261103">
+  <link rel="apple-touch-icon" href="team-logo.png?v=20261103">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -23,7 +26,6 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <!-- Google Fonts: スポーティなステンシル・Teko・日本語フォント -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Teko:wght@600;700&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
 
@@ -77,10 +79,9 @@
   <script type="text/babel">
     const { useState, useRef, useEffect } = React;
 
-    // チーム新ロゴ（team-logo.png または favicon.png）
-    const PRIMARY_TEAM_LOGO = "team-logo.png?v=2026";
-    const SECONDARY_TEAM_LOGO = "favicon.png?v=2026";
-    const FALLBACK_TEAM_LOGO = "https://spc-jp.github.io/koshigaya-boys-sns/team-logo.png?v=2026";
+    // GitHubに配置されたKB本物エンブレムロゴ
+    const PRIMARY_TEAM_LOGO = "team-logo.png?v=20261103";
+    const SECONDARY_TEAM_LOGO = "favicon.png?v=20261103";
 
     // 体験案内固定URL & 理念URL & スポンサー企業URL
     const ENTRY_URL = "https://www.koshigayaboys.com/entry/";
@@ -200,7 +201,6 @@
       // 画像アップロード & Canvas
       const [uploadedImgUrl, setUploadedImgUrl] = useState(null);
       const [isCardSaving, setIsCardSaving] = useState(false);
-      const [teamLogoImgObj, setTeamLogoImgObj] = useState(null);
       const canvasRef = useRef(null);
 
       // 公式戦・試合結果 専用ステート
@@ -219,26 +219,6 @@
         setToastMsg(msg);
         setTimeout(() => setToastMsg(''), 2500);
       };
-
-      // チームロゴ画像の事前ロード（team-logo.png -> favicon.png -> fallback の順）
-      useEffect(() => {
-        const logoImg = new Image();
-        logoImg.crossOrigin = "anonymous";
-        logoImg.onload = () => setTeamLogoImgObj(logoImg);
-        logoImg.onerror = () => {
-          const secondImg = new Image();
-          secondImg.crossOrigin = "anonymous";
-          secondImg.onload = () => setTeamLogoImgObj(secondImg);
-          secondImg.onerror = () => {
-            const thirdImg = new Image();
-            thirdImg.crossOrigin = "anonymous";
-            thirdImg.onload = () => setTeamLogoImgObj(thirdImg);
-            thirdImg.src = FALLBACK_TEAM_LOGO;
-          };
-          secondImg.src = SECONDARY_TEAM_LOGO;
-        };
-        logoImg.src = PRIMARY_TEAM_LOGO;
-      }, []);
 
       // 初回ダミー背景生成
       useEffect(() => {
@@ -274,7 +254,7 @@
         setUploadedImgUrl(dummyCanvas.toDataURL());
       }, []);
 
-      // Canvasカード描画（KBロゴ連動）
+      // Canvasカード描画（GitHubアップロード画像 team-logo.png を直接読み込み）
       const renderCard = () => {
         if (!uploadedImgUrl) return;
         const canvas = canvasRef.current;
@@ -357,23 +337,32 @@
           ctx.fillStyle = '#FFFFFF';
           ctx.fill();
 
-          // チームKBロゴ描画
-          if (teamLogoImgObj) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(42, 54, 27, 0, Math.PI * 2);
-            ctx.closePath();
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fill();
-            ctx.lineWidth = 2.5;
-            ctx.strokeStyle = theme.accent;
-            ctx.stroke();
-            ctx.clip();
-            ctx.drawImage(teamLogoImgObj, 15, 27, 54, 54);
-            ctx.restore();
-          }
+          // チームKBエンブレム丸型バッジ枠
+          const logoCircleX = 44;
+          const logoCircleY = 56;
+          const logoRadius = 28;
 
-          const textOffsetX = teamLogoImgObj ? 48 : 0;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(logoCircleX, logoCircleY, logoRadius, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fill();
+          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = theme.accent;
+          ctx.stroke();
+          ctx.clip();
+
+          // 本物のチームロゴ画像を読み込んで配置
+          const teamLogoImg = new Image();
+          teamLogoImg.crossOrigin = "anonymous";
+          teamLogoImg.src = PRIMARY_TEAM_LOGO;
+          teamLogoImg.onload = () => {
+            ctx.drawImage(teamLogoImg, logoCircleX - logoRadius + 2, logoCircleY - logoRadius + 2, (logoRadius - 2) * 2, (logoRadius - 2) * 2);
+          };
+          ctx.restore();
+
+          const textOffsetX = 52;
           ctx.fillStyle = theme.subText;
           ctx.font = '900 19px "Noto Sans JP", sans-serif';
           ctx.textAlign = 'left';
@@ -385,7 +374,7 @@
           ctx.fillStyle = theme.accent;
           ctx.font = 'bold 11px sans-serif';
           ctx.letterSpacing = '0.8px';
-          ctx.fillText(theme.titleBadge, 26, 96);
+          ctx.fillText(theme.titleBadge, 26, 102);
           ctx.restore();
 
           // 下部フレーム
@@ -481,7 +470,7 @@
         if (document.fonts) {
           document.fonts.ready.then(() => renderCard());
         }
-      }, [uploadedImgUrl, number, nameEn, nameJa, position, handedness, grade, originTeam, cardTheme, eventId, teamLogoImgObj, teamKey]);
+      }, [uploadedImgUrl, number, nameEn, nameJa, position, handedness, grade, originTeam, cardTheme, eventId, teamKey]);
 
       // 行事・チーム切り替え時の下書き生成
       useEffect(() => {
@@ -832,8 +821,8 @@
             </div>
           )}
 
-          {/* ヘッダーカード（KB新エンブレムロゴ） */}
-          <header className="bg-cardMain text-cardSub rounded-3xl shadow-md p-4 sm:p-5 mb-4 border-b-4 border-[#8B3738] relative overflow-hidden">
+          {/* ヘッダーカード（GitHubの team-logo.png を最優先表示） */}
+          <header className="bg-cardMain text-cardSub rounded-3xl shadow-md p-4 sm:p-5 mb-3 border-b-4 border-[#8B3738] relative overflow-hidden">
             <div className="flex items-center justify-between gap-2 mb-3">
               <span className="bg-cardSub text-cardMain text-xs font-black px-3 py-1 rounded-full shadow-inner tracking-wider">
                 考えるを、ひとりにしない。
@@ -849,14 +838,12 @@
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-white p-1 shadow-md shrink-0 overflow-hidden flex items-center justify-center border-2 border-white/80">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-1.5 shadow-md shrink-0 overflow-hidden flex items-center justify-center border-2 border-white/80">
                 <img
                   src={PRIMARY_TEAM_LOGO}
                   onError={(e) => {
-                    if (e.target.src.indexOf(SECONDARY_TEAM_LOGO) === -1 && e.target.src.indexOf(FALLBACK_TEAM_LOGO) === -1) {
+                    if (e.target.src.indexOf(SECONDARY_TEAM_LOGO) === -1) {
                       e.target.src = SECONDARY_TEAM_LOGO;
-                    } else if (e.target.src !== FALLBACK_TEAM_LOGO) {
-                      e.target.src = FALLBACK_TEAM_LOGO;
                     }
                   }}
                   alt="越谷ボーイズ KB公式ロゴ"
@@ -868,7 +855,7 @@
                   style={{
                     whiteSpace: 'nowrap',
                     wordBreak: 'keep-all',
-                    fontSize: 'clamp(15px, 4.4vw, 22px)'
+                    fontSize: 'clamp(14px, 4.2vw, 22px)'
                   }}
                   className="font-black tracking-tight leading-none text-cardSub"
                 >
@@ -881,30 +868,25 @@
             </div>
           </header>
 
-          {/* チーム選択プルダウンカード（最上部） */}
-          <div className="bg-white rounded-3xl p-3.5 sm:p-4 border-2 border-cardMain/40 shadow-sm mb-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-xl shrink-0">🧢</span>
-              <div>
-                <span className="text-xs font-bold text-stone-500 block leading-tight">
-                  どちらのチームの投稿ですか？
-                </span>
-                <span className="text-sm font-black text-stone-800 truncate block">
-                  対象チームを選択
-                </span>
-              </div>
+          {/* チーム選択（スマホでも絶対に文字が被らない2段レイアウト） */}
+          <div className="bg-white rounded-3xl p-3 sm:p-4 border-2 border-cardMain/40 shadow-sm mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">🧢</span>
+              <label className="text-xs sm:text-sm font-black text-stone-800">
+                どちらのチームの投稿ですか？（タップして選択）
+              </label>
             </div>
 
-            <div className="relative shrink-0">
+            <div className="relative w-full">
               <select
                 value={teamKey}
                 onChange={(e) => setTeamKey(e.target.value)}
-                className="appearance-none bg-[#FAF7F5] border-2 border-cardMain text-cardMain font-black text-sm sm:text-base py-2 pl-3 pr-8 rounded-2xl shadow-inner outline-none cursor-pointer"
+                className="w-full appearance-none bg-[#FAF7F5] border-2 border-cardMain text-cardMain font-black text-sm sm:text-base py-2.5 pl-4 pr-10 rounded-2xl shadow-inner outline-none cursor-pointer"
               >
                 <option value="koshigaya">⚾️ 越谷ボーイズ</option>
                 <option value="chuo">⚾️ 越谷中央ボーイズ</option>
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-cardMain font-bold">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-cardMain font-black text-xs">
                 ▼
               </div>
             </div>
@@ -1310,7 +1292,7 @@
                       type="text"
                       value={tournamentName}
                       onChange={e => setTournamentName(e.target.value)}
-                      placeholder="例：第〇回 日本少年野球 支部予セ"
+                      placeholder="例：第〇回 日本少年野球 支部予選"
                       className="w-full p-2.5 bg-white border border-stone-300 rounded-xl font-bold outline-none focus:border-cardMain"
                     />
                   </div>
