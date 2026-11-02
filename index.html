@@ -868,7 +868,7 @@
             </div>
           </header>
 
-          {/* ★ チーム選択プルダウンカード（最上部） */}
+          {/* チーム選択プルダウンカード（最上部） */}
           <div className="bg-white rounded-3xl p-3.5 sm:p-4 border-2 border-cardMain/40 shadow-sm mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-xl shrink-0">🧢</span>
@@ -1649,63 +1649,111 @@
             </div>
           </div>
 
-          {/* ★ オフィシャルスポンサー・サポーター紹介フッターカード */}
-          <aside className="mt-8 mb-4 bg-white rounded-3xl p-4 sm:p-5 border-2 border-stone-200 shadow-sm">
-            <div className="text-center mb-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-full text-xs font-black tracking-wide">
-                <span>🤝</span>
-                <span>OFFICIAL PARTNER</span>
-              </span>
-              <p className="text-xs text-stone-600 font-bold mt-2 leading-relaxed">
-                本アプリおよび越谷ボーイズ・越谷中央ボーイズの挑戦は、<br className="sm:hidden" />
-                青少年の夢を育む地域サポーター企業様のご協力により運営されています。
+          {/* ★ スポンサー募集枠 ＆ オフィシャルサポーター紹介フッター（案1・案2の融合型） */}
+          <aside className="mt-8 mb-4 bg-white rounded-3xl p-4 sm:p-5 border-2 border-stone-200 shadow-sm space-y-4">
+            
+            {/* 1. スポンサー（協賛企業）募集のご案内枠（案1＋案2） */}
+            <div className="bg-gradient-to-br from-amber-50/70 via-stone-50 to-orange-50/50 rounded-2xl p-4 border border-amber-300 shadow-sm">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-400 text-stone-900 rounded-full text-[11px] font-black shadow-sm">
+                  <span>🤝</span>
+                  <span>オフィシャルスポンサー募集中</span>
+                </span>
+                <span className="text-[11px] font-bold text-amber-800">
+                  創部30期・3,600名の絆
+                </span>
+              </div>
+
+              <h4 className="font-black text-stone-900 text-sm sm:text-base leading-snug">
+                子どもたちの夢と挑戦を支えるパートナー企業様を募集しています
+              </h4>
+              <p className="text-xs text-stone-600 mt-1 leading-relaxed">
+                越谷ボーイズ／越谷中央ボーイズでは、青少年の健全育成を共に歩んでくださる地域企業様・個人サポーター様を広く募っております。本アプリへのバナー掲載やHPリンク等、地域ファミリー層へ好感度高く貴社をお届けします。
               </p>
+
+              {/* 枠（プレースホルダー）＋公式HP案内ボタン */}
+              <div className="mt-3 pt-3 border-t border-amber-200/80 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="w-10 h-10 rounded-xl border-2 border-dashed border-amber-400/80 bg-white/80 flex items-center justify-center shrink-0 text-amber-700 font-black text-xs shadow-inner">
+                    ＋枠
+                  </div>
+                  <div className="text-[11px] text-stone-600 leading-tight">
+                    <span className="font-bold text-stone-800 block">貴社ロゴ掲載枠 受付中</span>
+                    <span>保護者・OBが毎週使うアプリ内に掲載</span>
+                  </div>
+                </div>
+
+                <a
+                  href={ABOUT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black text-xs rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-1 shrink-0"
+                >
+                  <span>協賛・理念の詳細を見る</span>
+                  <span>↗</span>
+                </a>
+              </div>
             </div>
 
-            {/* スポンサーバナーカード（タップで企業サイトへ） */}
-            <a
-              href={SPC_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group block bg-[#FAF7F5] hover:bg-white rounded-2xl p-3.5 sm:p-4 border border-stone-200 hover:border-blue-500 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-3.5">
-                {/* ロゴ表示エリア：画像読み込み優先＋フォールバック */}
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl p-2 shadow-sm border border-stone-200 flex items-center justify-center shrink-0 overflow-hidden">
-                  <img
-                    src={PRIMARY_SPC_LOGO}
-                    onError={(e) => {
-                      if (e.target.src !== FALLBACK_SPC_LOGO) {
-                        e.target.src = FALLBACK_SPC_LOGO;
-                      }
-                    }}
-                    alt="スマイルプラスコンサルティング ロゴ"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-
-                {/* 企業情報テキスト */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-[10px] sm:text-xs font-black text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
-                      オフィシャル協賛
-                    </span>
-                    <span className="text-xs text-stone-400 group-hover:text-blue-600 transition">
-                      公式サイト ↗
-                    </span>
-                  </div>
-                  <h3 className="font-black text-stone-900 text-sm sm:text-base leading-tight group-hover:text-blue-800 transition">
-                    スマイルプラスコンサルティング
-                  </h3>
-                  <p className="text-[11px] sm:text-xs text-stone-500 mt-1 leading-snug line-clamp-2">
-                    地域社会と子どもの笑顔をつなぐ。越谷ボーイズ／越谷中央ボーイズの選手たちを温かくサポートしています。
-                  </p>
-                  <p className="text-[10px] text-stone-400 mt-1 font-mono truncate">
-                    smileplusctg.com
-                  </p>
-                </div>
+            {/* 2. 現在のOFFICIAL PARTNER表示（ご要望のイメージを完全キープ） */}
+            <div>
+              <div className="text-center mb-3">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-full text-xs font-black tracking-wide">
+                  <span>🤝</span>
+                  <span>OFFICIAL PARTNER</span>
+                </span>
+                <p className="text-xs text-stone-600 font-bold mt-2 leading-relaxed">
+                  本アプリおよび越谷ボーイズ・越谷中央ボーイズの挑戦は、<br />
+                  青少年の夢を育む地域サポーター企業様のご協力により運営されています。
+                </p>
               </div>
-            </a>
+
+              {/* スポンサーバナーカード（タップで企業サイトへ） */}
+              <a
+                href={SPC_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block bg-[#FAF7F5] hover:bg-white rounded-2xl p-3.5 sm:p-4 border border-stone-200 hover:border-blue-500 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+              >
+                <div className="flex items-center gap-3.5">
+                  {/* ロゴ表示エリア：画像読み込み優先＋フォールバック */}
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl p-2 shadow-sm border border-stone-200 flex items-center justify-center shrink-0 overflow-hidden">
+                    <img
+                      src={PRIMARY_SPC_LOGO}
+                      onError={(e) => {
+                        if (e.target.src !== FALLBACK_SPC_LOGO) {
+                          e.target.src = FALLBACK_SPC_LOGO;
+                        }
+                      }}
+                      alt="スマイルプラスコンサルティング ロゴ"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+
+                  {/* 企業情報テキスト */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="text-[10px] sm:text-xs font-black text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                        オフィシャル協賛
+                      </span>
+                      <span className="text-xs text-stone-400 group-hover:text-blue-600 transition">
+                        公式サイト ↗
+                      </span>
+                    </div>
+                    <h3 className="font-black text-stone-900 text-sm sm:text-base leading-tight group-hover:text-blue-800 transition">
+                      スマイルプラスコンサルティング
+                    </h3>
+                    <p className="text-[11px] sm:text-xs text-stone-500 mt-1 leading-snug line-clamp-2">
+                      地域社会と子どもの笑顔をつなぐ。越谷ボーイズ／越谷中央ボーイズの選手たちを温かくサポートしています。
+                    </p>
+                    <p className="text-[10px] text-stone-400 mt-1 font-mono truncate">
+                      smileplusctg.com
+                    </p>
+                  </div>
+                </div>
+              </a>
+            </div>
+
           </aside>
 
           {/* フッター */}
