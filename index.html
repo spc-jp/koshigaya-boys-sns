@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>越谷ボーイズ かんたん広報ノート & 野球カードメーカー</title>
+  <title>越谷ボーイズ / 越谷中央ボーイズ かんたん広報ノート & 野球カードメーカー</title>
 
   <!-- OGP メタタグ -->
-  <meta property="og:title" content="越谷ボーイズ かんたん広報ノート & 野球カードメーカー">
+  <meta property="og:title" content="越谷ボーイズ / 越谷中央ボーイズ かんたん広報ノート & 野球カードメーカー">
   <meta property="og:description" content="考えるを、ひとりにしない。選ぶだけで1分でSNS投稿文＆プロ野球チップス風カード画像が完成！">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://spc-jp.github.io/koshigaya-boys-sns/">
@@ -69,24 +69,32 @@
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    /* 日本語の自然な改行調整 */
-    .keep-words {
-      word-break: keep-all;
-      overflow-wrap: break-word;
-    }
   </style>
 </head>
-<body class="min-h-screen pb-36 sm:pb-20">
+<body class="min-h-screen pb-36 sm:pb-24">
   <div id="root"></div>
 
   <script type="text/babel">
     const { useState, useRef, useEffect } = React;
 
-    // ローカル配置（favicon.png）とGitHub Pages公開URLの自動フォールバック（キャッシュ回避パラメータ付き）
+    // ローカル配置（favicon.png）とGitHub Pages公開URLの自動フォールバック
     const PRIMARY_MASCOT_URL = "favicon.png?v=2026";
     const FALLBACK_MASCOT_URL = "https://spc-jp.github.io/koshigaya-boys-sns/favicon.png?v=2026";
 
-    // 行事マスター（よく使う順に配置・7と8を入れ替え）
+    // 体験案内固定URL & 理念URL & スポンサー企業URL
+    const ENTRY_URL = "https://www.koshigayaboys.com/entry/";
+    const ABOUT_URL = "https://www.koshigayaboys.com/about/";
+    const SPC_URL = "https://www.smileplusctg.com/";
+    const PRIMARY_SPC_LOGO = "spc-logo.png?v=2026";
+    const FALLBACK_SPC_LOGO = "https://spc-jp.github.io/koshigaya-boys-sns/spc-logo.png?v=2026";
+
+    // チーム選択肢
+    const TEAMS = [
+      { id: 'koshigaya', name: '越谷ボーイズ', enName: 'KOSHIGAYA BOYS' },
+      { id: 'chuo', name: '越谷中央ボーイズ', enName: 'KOSHIGAYA CHUO BOYS' }
+    ];
+
+    // 行事マスター（使用頻度順 + スポンサー募集）
     const EVENTS = [
       {
         id: 'tournament',
@@ -125,8 +133,8 @@
       },
       {
         id: 'daily_schedule',
-        title: '⏰ 越谷ボーイズのある週末の1日',
-        badge: 'お母さん安心',
+        title: '⏰ ある週末の1日（スケジュール）',
+        badge: '父母さん安心',
         desc: '土日の時間割やお茶当番の負担軽減を伝えて不安を解消',
         isSpecial: false
       },
@@ -143,44 +151,15 @@
         badge: '協力体制',
         desc: '無理のない当番体制・指導者との連携・温かい応援の様子',
         isSpecial: false
+      },
+      {
+        id: 'sponsor',
+        title: '🤝 オフィシャルスポンサー募集',
+        badge: '創部30期・地域応援',
+        desc: '30期・3,600名の絆とともに青少年の健全育成を支える企業・サポーター募集',
+        isSpecial: false
       }
     ];
-
-    // 目的・締めくくり（平易な言葉に翻訳）
-    const CTAS = {
-      experience: {
-        label: '体験練習に来てほしい（公式HPへ案内）',
-        sub: '「見学・体験はいつでも歓迎！」と結びます',
-        icon: '📝',
-        insta: '＼ 体験練習・見学はいつでも大歓迎です！ ／\n公式HPのWebフォーム、またはDMよりお気軽にお問い合わせください📩\n詳細はプロフィールのリンク（@koshigaya_boys）からご覧いただけます⚾️✨',
-        fb: '【体験練習・見学のお問い合わせ】\n越谷ボーイズでは、新入団員（新中1・現小6）を随時募集しております。体験練習のご参加・ご質問は、下記公式ホームページのお問い合わせフォームよりお気軽にご連絡ください。\n🔗 公式サイト：https://koshigaya-boys.com/'
-      },
-      cheer: {
-        label: '子どもたちの頑張りを見てほしい（応援のお願い）',
-        sub: '「いいね！や温かいエール」をお願いします',
-        icon: '📣',
-        insta: '選手たちのひたむきなプレーに、温かい「いいね！」やコメントでエールを届けていただけると大きな励みになります⚾️💬✨\nいつも応援ありがとうございます！',
-        fb: '日頃より温かく見守ってくださる皆様の応援が、選手たちの最大の力となっております。引き続き越谷ボーイズへの温かいご声援をよろしくお願い申し上げます。'
-      },
-      thanks: {
-        label: '感謝を伝えたい（指導者・保護者・大会関係者へ）',
-        sub: '「皆様の温かい支えに感謝します」と結びます',
-        icon: '🙏',
-        insta: 'いつも温かく背中を押してくださる指導陣、保護者の皆様、そして地域の皆様に心から感謝いたします✨\nこれからも全員野球で恩返ししていきます！',
-        fb: '大会を支えてくださる役員・審判員の皆様、日頃より惜しみない愛情を注いでくださる指導者・保護者の皆様に、改めて深く感謝申し上げます。'
-      },
-      ob_report: {
-        label: 'OB・地域へ活動を報告したい（伝統の継承と信頼）',
-        sub: '「先輩方、いつでもグラウンドへ！」と結びます',
-        icon: '🤝',
-        insta: '越谷ボーイズの伝統をしっかり引き継ぎ、後輩たちも全力で前進しています！OB・OGの先輩方、いつでもグランドへ遊びに来てください⚾️✨',
-        fb: '越谷ボーイズの礎を築いてこられた歴代OB・OGの皆様、ならびに関係各位に謹んでご報告申し上げます。伝統の誇りを胸に、現役世代も全力で精進を続けてまいります。'
-      }
-    };
-
-    // ハッシュタグ
-    const TAGS_INSTA = '#越谷ボーイズ #中学硬式野球 #ボーイズリーグ #凡事徹底 #少年野球 #体験練習受付中 #越谷市 #高校野球へつなぐ #野球好きな人と繋がりたい';
-    const TAGS_FB = '#越谷ボーイズ #ボーイズリーグ #中学硬式野球 #越谷Kクラブ #文武両道 #青少年健全育成';
 
     // 安心チェック用
     const NG_WORDS = [
@@ -191,7 +170,12 @@
     ];
 
     const App = () => {
-      // 選択ステート（一番上の試合結果を初期選択）
+      // チーム選択ステート
+      const [teamKey, setTeamKey] = useState('koshigaya');
+      const selectedTeam = TEAMS.find(t => t.id === teamKey) || TEAMS[0];
+      const teamName = selectedTeam.name;
+      const teamEnName = selectedTeam.enName;
+
       const [eventId, setEventId] = useState('tournament');
       const [format, setFormat] = useState('insta_feed');
       const [purpose, setPurpose] = useState('experience');
@@ -199,11 +183,10 @@
       const [showResetConfirm, setShowResetConfirm] = useState(false);
       const [toastMsg, setToastMsg] = useState('');
       const [copiedKey, setCopiedKey] = useState('');
-      // ★ コピー後の次アクション案内ポップアップ
       const [showPostCopyModal, setShowPostCopyModal] = useState(false);
 
       // 選手カード専用ステート
-      const [cardTheme, setCardTheme] = useState('gold'); // 'gold' | 'navy' | 'classic'
+      const [cardTheme, setCardTheme] = useState('gold');
       const [number, setNumber] = useState('10');
       const [nameJa, setNameJa] = useState('佐藤 颯太');
       const [nameEn, setNameEn] = useState('SOUTA SATO');
@@ -219,13 +202,13 @@
       const [mascotImgObj, setMascotImgObj] = useState(null);
       const canvasRef = useRef(null);
 
-      // ★ 公式戦・試合結果 専用ステート
+      // 公式戦・試合結果 専用ステート
       const [tournamentName, setTournamentName] = useState('第〇回 日本少年野球 支部予選');
       const [stadiumName, setStadiumName] = useState('越谷市民球場');
       const [opponentName, setOpponentName] = useState('草加ボーイズ');
       const [myScore, setMyScore] = useState('6');
       const [opponentScore, setOpponentScore] = useState('4');
-      const [matchMood, setMatchMood] = useState('win'); // 'win' | 'good' | 'lose'
+      const [matchMood, setMatchMood] = useState('win');
       const [matchHighlight, setMatchHighlight] = useState('最終回の満塁のピンチを、全員の気迫と好守備で守り抜きました！');
 
       // 自由入力・本文ステート
@@ -236,19 +219,18 @@
         setTimeout(() => setToastMsg(''), 2500);
       };
 
-      // マスコット画像の事前ロード（カード描画用）
+      // マスコット画像の事前ロード
       useEffect(() => {
         const mImg = new Image();
         mImg.crossOrigin = "anonymous";
         mImg.onload = () => setMascotImgObj(mImg);
         mImg.onerror = () => {
-          // フォールバックURLから再読込
           mImg.src = FALLBACK_MASCOT_URL;
         };
         mImg.src = PRIMARY_MASCOT_URL;
       }, []);
 
-      // 初回ダミー写真背景の生成
+      // 初回ダミー背景生成
       useEffect(() => {
         const dummyCanvas = document.createElement('canvas');
         dummyCanvas.width = 600;
@@ -282,7 +264,7 @@
         setUploadedImgUrl(dummyCanvas.toDataURL());
       }, []);
 
-      // Canvasにカルビー風野球カードフレームを描画
+      // Canvasカード描画（選択チーム名連動）
       const renderCard = () => {
         if (!uploadedImgUrl) return;
         const canvas = canvasRef.current;
@@ -298,12 +280,10 @@
           canvas.width = W;
           canvas.height = H;
 
-          // テーマごとの配色定義
           const THEME_COLORS = {
             gold: {
-              main: '#9B0709',       // 越谷深紅
-              accent: '#E5C158',     // シャンパンゴールド
-              accentBorder: '#D4AF37',
+              main: '#9B0709',
+              accent: '#E5C158',
               badgeBg: '#E5C158',
               badgeText: '#1A1415',
               subText: '#FAF7F5',
@@ -311,9 +291,8 @@
               titleBadge: '★ SPECIAL GOLD EDITION ★'
             },
             navy: {
-              main: '#020562',       // 侍ネイビー
-              accent: '#22AEC9',     // スポーティシアン
-              accentBorder: '#00E5FF',
+              main: '#020562',
+              accent: '#22AEC9',
               badgeBg: '#FFFFFF',
               badgeText: '#020562',
               subText: '#FFFFFF',
@@ -321,9 +300,8 @@
               titleBadge: '★ ATHLETE NAVY EDITION ★'
             },
             classic: {
-              main: '#BB5758',       // クラシックローズ
-              accent: '#F3E8E1',     // 生成りクリーム
-              accentBorder: '#FFFFFF',
+              main: '#BB5758',
+              accent: '#F3E8E1',
               badgeBg: '#F3E8E1',
               badgeText: '#BB5758',
               subText: '#F3E8E1',
@@ -334,7 +312,6 @@
 
           const theme = THEME_COLORS[cardTheme] || THEME_COLORS.gold;
 
-          // 1. 写真トリミング中央全画面フィット
           const hRatio = W / img.width;
           const vRatio = H / img.height;
           const ratio = Math.max(hRatio, vRatio);
@@ -342,36 +319,34 @@
           const shiftY = (H - img.height * ratio) / 2;
           ctx.drawImage(img, 0, 0, img.width, img.height, shiftX, shiftY, img.width * ratio, img.height * ratio);
 
-          // 2. 左上：鋭角トライアングルバナー
+          // 左上トライアングル
           ctx.save();
           ctx.beginPath();
           ctx.moveTo(0, 0);
-          ctx.lineTo(290, 0);
-          ctx.lineTo(0, 195);
+          ctx.lineTo(310, 0);
+          ctx.lineTo(0, 205);
           ctx.closePath();
           ctx.fillStyle = theme.main;
           ctx.fill();
 
-          // 左上ゴールド/アクセント装飾ダブルライン
           ctx.beginPath();
-          ctx.moveTo(290, 0);
-          ctx.lineTo(304, 0);
+          ctx.moveTo(310, 0);
+          ctx.lineTo(324, 0);
+          ctx.lineTo(0, 215);
           ctx.lineTo(0, 205);
-          ctx.lineTo(0, 195);
           ctx.closePath();
           ctx.fillStyle = theme.accent;
           ctx.fill();
 
           ctx.beginPath();
-          ctx.moveTo(304, 0);
-          ctx.lineTo(308, 0);
-          ctx.lineTo(0, 208);
-          ctx.lineTo(0, 205);
+          ctx.moveTo(324, 0);
+          ctx.lineTo(328, 0);
+          ctx.lineTo(0, 218);
+          ctx.lineTo(0, 215);
           ctx.closePath();
           ctx.fillStyle = '#FFFFFF';
           ctx.fill();
 
-          // 左上：シラコバト公式エンブレムの描画（カードに本物のプロ仕様感を演出）
           if (mascotImgObj) {
             ctx.save();
             ctx.beginPath();
@@ -387,27 +362,23 @@
             ctx.restore();
           }
 
-          // 左上ロゴテキスト & スター刻印（エンブレムがある場合は位置を右に美しくオフセット）
           const textOffsetX = mascotImgObj ? 48 : 0;
           ctx.fillStyle = theme.subText;
-          ctx.font = '900 21px "Noto Sans JP", sans-serif';
+          ctx.font = '900 19px "Noto Sans JP", sans-serif';
           ctx.textAlign = 'left';
-          ctx.fillText('KOSHIGAYA', 26 + textOffsetX, 44);
-          ctx.font = 'bold 11px sans-serif';
-          ctx.letterSpacing = '1.8px';
+          ctx.fillText(teamKey === 'chuo' ? 'KOSHIGAYA CHUO' : 'KOSHIGAYA', 26 + textOffsetX, 44);
+          ctx.font = 'bold 10.5px sans-serif';
+          ctx.letterSpacing = '1.5px';
           ctx.fillText('BOYS BASEBALL CARD', 28 + textOffsetX, 62);
 
-          // 箔押し風刻印バッジ
           ctx.fillStyle = theme.accent;
           ctx.font = 'bold 11px sans-serif';
           ctx.letterSpacing = '0.8px';
           ctx.fillText(theme.titleBadge, 26, 96);
           ctx.restore();
 
-          // 3. 下部：カルビー風多層シャープカッティングフレーム
+          // 下部フレーム
           const bottomBaseY = 620;
-
-          // (A) サブカラーライン
           ctx.save();
           ctx.beginPath();
           ctx.moveTo(0, bottomBaseY - 20);
@@ -419,7 +390,6 @@
           ctx.fill();
           ctx.restore();
 
-          // (B) メインカラー鋭角フレーム
           ctx.save();
           ctx.beginPath();
           ctx.moveTo(0, bottomBaseY);
@@ -431,7 +401,6 @@
           ctx.fill();
           ctx.restore();
 
-          // (C) 引き締めダーク帯
           ctx.save();
           ctx.beginPath();
           ctx.moveTo(0, bottomBaseY + 75);
@@ -443,32 +412,27 @@
           ctx.fill();
           ctx.restore();
 
-          // 4. テキスト情報
+          // 選手情報
           ctx.save();
-          // 背番号（ゴールドまたは白でシャープに描画）
           ctx.fillStyle = theme.accent;
           ctx.font = '78px "Black Ops One", "Teko", sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText(number || '00', 34, 765);
 
-          // チーム名ラベル
           ctx.fillStyle = theme.subText;
           ctx.font = 'bold 12px sans-serif';
-          ctx.letterSpacing = '2.5px';
-          ctx.fillText('TEAM KOSHIGAYA BOYS', 36, 788);
+          ctx.letterSpacing = '2px';
+          ctx.fillText(`TEAM ${teamEnName}`, 36, 788);
 
-          // 選手名（英字ステンシル）
           ctx.fillStyle = '#FFFFFF';
           ctx.font = 'bold 44px "Teko", sans-serif';
           ctx.letterSpacing = '1.5px';
           ctx.fillText((nameEn || 'PLAYER NAME').toUpperCase(), 36, 832);
 
-          // 選手名（漢字）
           ctx.fillStyle = theme.accent;
           ctx.font = '900 22px "Noto Sans JP", sans-serif';
           ctx.fillText(nameJa || '', 36, 866);
 
-          // 学年・守備位置・投打（プロ名鑑スタイル）
           ctx.fillStyle = '#FFFFFF';
           ctx.font = 'bold 13px "Noto Sans JP", sans-serif';
           const subInfo = [grade, position, handedness].filter(Boolean).join(' ｜ ');
@@ -476,26 +440,22 @@
             ctx.fillText(`[ ${subInfo} ]`, 185, 866);
           }
 
-          // 5. 右下：出身学童チーム名バッジ（ゴールド額縁つき）
           if (originTeam) {
             const badgeW = 230;
             const badgeH = 36;
             const badgeX = W - badgeW - 20;
             const badgeY = H - 54;
 
-            // 金フチ
             ctx.fillStyle = theme.accent;
             ctx.beginPath();
             ctx.roundRect(badgeX - 2, badgeY - 2, badgeW + 4, badgeH + 4, 8);
             ctx.fill();
 
-            // バッジ本体
             ctx.fillStyle = theme.badgeBg;
             ctx.beginPath();
             ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 6);
             ctx.fill();
 
-            // テキスト
             ctx.fillStyle = theme.badgeText;
             ctx.font = '900 13.5px "Noto Sans JP", sans-serif';
             ctx.textAlign = 'center';
@@ -510,24 +470,24 @@
         if (document.fonts) {
           document.fonts.ready.then(() => renderCard());
         }
-      }, [uploadedImgUrl, number, nameEn, nameJa, position, handedness, grade, originTeam, cardTheme, eventId, mascotImgObj]);
+      }, [uploadedImgUrl, number, nameEn, nameJa, position, handedness, grade, originTeam, cardTheme, eventId, mascotImgObj, teamKey]);
 
-      // 行事切り替え時に下書き本文を自動セット
+      // 行事・チーム切り替え時の下書き生成
       useEffect(() => {
         const isFb = format === 'facebook';
 
         if (eventId === 'player') {
           if (isFb) {
             setCustomMemo(
-`【今週のキラリ選手紹介：背番号${number || '00'} ${nameJa || '選手'}】\n\n越谷ボーイズで日々成長を続ける選手をご紹介します。\n\n■ 選手名：${nameJa}（${nameEn}）\n■ 学年・守備位置：${grade} / ${position}（${handedness}）\n■ 出身学童野球チーム：${originTeam}\n\n【後輩・小学生へのメッセージ】\n「${playerMessage}」\n\n地道な基礎練習（凡事徹底）と道具を大切にする姿勢で、チームを力強く引っ張ってくれています。今後のさらなる飛躍にご期待ください！`
+`【今週のキラリ選手紹介：背番号${number || '00'} ${nameJa || '選手'}】\n\n${teamName}で日々成長を続ける選手をご紹介します。\n\n■ 選手名：${nameJa}（${nameEn}）\n■ 所属：${teamName}（NPO法人 越谷K・クラブ）\n■ 学年・守備位置：${grade} / ${position}（${handedness}）\n■ 出身学童野球チーム：${originTeam}\n\n【後輩・小学生へのメッセージ】\n「${playerMessage}」\n\n地道な基礎練習（凡事徹底）と道具を大切にする姿勢で、チームを力強く引っ張ってくれています。今後のさらなる飛躍にご期待ください！\n\n⚾️ まずは一度、グラウンドへ！見学・体験練習はお気軽にどうぞ。\n🔗 お申込みはこちら：${ENTRY_URL}`
             );
           } else {
             setCustomMemo(
-`🌟【今週のキラリ選手紹介！】⚾️✨\n越谷ボーイズの仲間を紹介します！\n\n📸 1枚目の限定選手カードもぜひ見てね！\n━━━━━━━━━━━━━━━\n■ 背番号：#${number || '00'}\n■ 選手名：${nameJa} 選手（${nameEn}）\n■ 学年・ポジション：${grade} / ${position}（${handedness}）\n■ 出身学童チーム：★${originTeam}★\n━━━━━━━━━━━━━━━\n\n🗣 選手から小学生の後輩たちへ一言！\n「${playerMessage}」\n\nグラウンドでの元気な声と、道具をピカピカに磨く姿が光っています👟✨\n先輩の背中を追って、ぜひグラウンドへ気軽に遊びに来てくださいね！🙌`
+`🌟【今週のキラリ選手紹介！】⚾️✨\n${teamName}の仲間を紹介します！\n\n📸 1枚目の限定選手カードもぜひ見てね！\n━━━━━━━━━━━━━━━\n■ チーム：${teamName}\n■ 背番号：#${number || '00'}\n■ 選手名：${nameJa} 選手（${nameEn}）\n■ 学年・ポジション：${grade} / ${position}（${handedness}）\n■ 出身学童チーム：★${originTeam}★\n━━━━━━━━━━━━━━━\n\n🗣 選手から小学生の後輩たちへ一言！\n「${playerMessage}」\n\nグラウンドでの元気な声と、道具をピカピカに磨く姿が光っています👟✨\n先輩の背中を追って、まずは一度、グラウンドへ遊びに来てくださいね！🙌`
             );
           }
         } else if (eventId === 'tournament') {
-          const sKoshigaya = myScore.trim() || '0';
+          const sMyTeam = myScore.trim() || '0';
           const sOpp = opponentScore.trim() || '0';
           const opp = opponentName.trim() || '〇〇ボーイズ';
           const tName = tournamentName.trim() || '公式戦';
@@ -538,7 +498,7 @@
           let moodBodyFb = '';
 
           if (matchMood === 'win') {
-            moodTitleInsta = `🏆【公式戦勝利！】粘りの全員野球で掴んだ白星！⚾️🔥`;
+            moodTitleInsta = `🏆【公式戦勝利！】${teamName} 粘りの全員野球で掴んだ白星！⚾️🔥`;
             moodBodyInsta = `序盤から息詰まる攻防となりましたが、最後までベンチもスタンドも声を掛け合い、見事勝利を掴み取りました！✨\n${matchHighlight ? `\n🔥 本日のハイライト：\n「${matchHighlight}」\n` : ''}\n一戦ごとに頼もしく成長していく選手たちへ、次戦も熱い応援をよろしくお願いいたします！`;
             moodBodyFb = `緊迫した展開のなか、選手たちは日頃の練習の成果を発揮し、粘り強い全員野球で勝利を収めました。\n${matchHighlight ? `本日のハイライト：「${matchHighlight}」\n` : ''}次戦に向けて気を引き締め、さらなるチーム力の向上に励んでまいります。`;
           } else if (matchMood === 'lose') {
@@ -553,57 +513,57 @@
 
           if (isFb) {
             setCustomMemo(
-`【公式戦 試合結果のご報告】\n\n本日行われました公式戦の試合結果をご報告いたします。\n\n━━━━━━━━━━━━━━━━━\n■ 大会名：${tName}\n■ 試合会場：${stadiumName || '公式球場'}\n■ 対戦カード：越谷ボーイズ vs ${opp}\n■ 試合結果：越谷ボーイズ ${sKoshigaya} - ${sOpp} ${opp}\n━━━━━━━━━━━━━━━━━\n\n${moodBodyFb}\n\n対戦いただいた${opp}の皆様、ならびに大会関係者・審判員の皆様に深く御礼申し上げます。`
+`【公式戦 試合結果のご報告】\n\n本日行われました公式戦の試合結果をご報告いたします。\n\n━━━━━━━━━━━━━━━━━\n■ 大会名：${tName}\n■ 試合会場：${stadiumName || '公式球場'}\n■ 対戦カード：${teamName} vs ${opp}\n■ 試合結果：${teamName} ${sMyTeam} - ${sOpp} ${opp}\n━━━━━━━━━━━━━━━━━\n\n${moodBodyFb}\n\n対戦いただいた${opp}の皆様、ならびに大会関係者・審判員の皆様に深く御礼申し上げます。`
             );
           } else {
             setCustomMemo(
-`${moodTitleInsta}\n本日行われた公式戦の結果をお知らせします！\n\n━━━━━━━━━━━━━━━\n■ 大会：${tName}\n■ スコア：越谷ボーイズ ${sKoshigaya} - ${sOpp} ${opp} ${stadium}\n━━━━━━━━━━━━━━━\n\n${moodBodyInsta}\n\n対戦いただいた${opp}の皆様、大会運営関係者の皆様、ありがとうございました！🙌`
+`${moodTitleInsta}\n本日行われた公式戦の結果をお知らせします！\n\n━━━━━━━━━━━━━━━\n■ 大会：${tName}\n■ スコア：${teamName} ${sMyTeam} - ${sOpp} ${opp} ${stadium}\n━━━━━━━━━━━━━━━\n\n${moodBodyInsta}\n\n対戦いただいた${opp}の皆様、大会運営関係者の皆様、ありがとうございました！🙌`
             );
           }
         } else if (eventId === 'experience') {
           setCustomMemo(
             isFb
-              ? `【小学生・保護者の皆様へ：体験練習会のご案内】\n\n越谷ボーイズ（NPO法人 越谷K・クラブ）では、新入団員（新中1・現小6）向けの体験練習会・見学会を随時開催しております。\n\n高校野球へつながる確かな基礎指導はもちろん、挨拶や道具の整理整頓といった「凡事徹底」の人間育成を何よりも大切にしています。\n「硬式野球へのステップアップを肌で感じてみたい」「チームの温かい雰囲気を確かめたい」など、どうぞお気軽にご参加ください。スタッフ・在団生一同、心よりお待ちしております。`
-              : `⚾️【体験練習会 開催のおしらせ】✨\n中学野球の準備、越谷ボーイズでスタートしませんか？\n\n「硬式球って怖くないかな？」「部活とクラブチーム、どっちがいい？」\nそんな不安や疑問をお持ちの小学6年生・保護者の皆様、ぜひ一度越谷ボーイズのグラウンドへお越しください！\n\n見学のみ・午前中だけの参加も大歓迎。グローブ貸出ありますので手ぶらでもOKです👌 先輩選手や指導陣が笑顔で温かく迎えます！`
+              ? `【小学生・保護者の皆様へ：体験練習会のご案内】\n\n${teamName}（NPO法人 越谷K・クラブ）では、新入団員（新中1・現小6）向けの体験練習会・見学会を随時開催しております。\n\n高校野球へつながる確かな基礎指導はもちろん、挨拶や道具の整理整頓といった「凡事徹底」の人間育成を何よりも大切にしています。\n「硬式野球へのステップアップを肌で感じてみたい」「チームの温かい雰囲気を確かめたい」など、どうぞお気軽にご参加ください。\n\n⚾️ まずは一度、グラウンドへ！\n詳細・お申込み専用ページはこちらです：\n🔗 ${ENTRY_URL}\n\nスタッフ・在団生一同、心よりお待ちしております。`
+              : `⚾️【体験練習会 開催のおしらせ】✨\n中学野球の準備、${teamName}でスタートしませんか？\n\n「硬式球って怖くないかな？」「部活とクラブチーム、どっちがいい？」\nそんな不安や疑問をお持ちの小学6年生・保護者の皆様、\nまずは一度、グラウンドへ！${teamName}のグラウンドへお越しください⚾️✨\n\n見学のみ・午前中だけの参加も大歓迎。グローブ貸出ありますので手ぶらでもOKです👌 先輩選手や指導陣が笑顔で温かく迎えます！\n\n👇 日程確認・Web申込みはこちらから！\n🔗 ${ENTRY_URL}`
           );
         } else if (eventId === 'welcome_team') {
           setCustomMemo(
             isFb
-              ? `【学童野球チームの皆様へ：体験見学の御礼】\n\n本日は、〇〇少年野球チームの皆様が越谷ボーイズの体験練習へご参加くださいました。\n\n白球をひたむきに追う元気いっぱいのプレーと明るい笑顔に、当チームの選手・指導陣一同、大きな刺激と元気をいただきました。\n今後とも地域の学童野球チームの皆様との温かい交流を深め、子どもたちの健全な野球環境づくりに貢献してまいります。ご引率いただいた指導者・保護者の皆様に心より御礼申し上げます。`
-              : `🤝【〇〇少年野球の皆さん、来てくれてありがとう！】⚾️✨\n本日の練習に、地域の学童野球チームの選手たちが体験に来てくれました！\n\n最初は緊張していた小学生も、先輩たちと一緒にノックを受けるうちに笑顔いっぱいに😆\n「楽しかった！」「また来たい！」という言葉に、選手たちも大喜びでした！\nまたいつでもグラウンドに遊びに来てくださいね！お待ちしています！🙌`
-          );
-        } else if (eventId === 'tournament') {
-          setCustomMemo(
-            isFb
-              ? `【公式戦 試合結果のご報告】\n\n本日行われました公式戦の試合結果をご報告いたします。\n\n■ 大会名：第〇回 大会\n■ 対戦カード：越谷ボーイズ vs 〇〇ボーイズ\n■ 試合結果：〇 - 〇\n\n選手たちは日頃の練習の成果を存分に発揮し、最後まで全員野球で戦い抜きました。勝敗の先にある課題にも真摯に向き合い、次戦へ向けてさらなる技術とチーム力の向上を図ってまいります。\n大会関係者の皆様、ならびに対戦いただいた〇〇ボーイズの皆様に深く御礼申し上げます。`
-              : `🏆【公式戦結果】全員野球で掴んだ一歩！⚾️🔥\n本日行われた公式戦の結果をお知らせします！\n\n緊迫した展開が続きましたが、最後まで声を掛け合い、ベンチもスタンドも心をひとつにして戦い抜きました！\n選手たちの必死なスライディングや笑顔…一戦ごとにたくましく成長しています！\n熱い応援を送ってくださった皆様、本当にありがとうございました！次も全力疾走で挑みます！👊`
+              ? `【学童野球チームの皆様へ：体験見学の御礼】\n\n本日は、〇〇少年野球チームの皆様が${teamName}の体験練習へご参加くださいました。\n\n白球をひたむきに追う元気いっぱいのプレーと明るい笑顔に、当チームの選手・指導陣一同、大きな刺激と元気をいただきました。\n今後とも地域の学童野球チームの皆様との温かい交流を深め、子どもたちの健全な野球環境づくりに貢献してまいります。ご引率いただいた指導者・保護者の皆様に心より御礼申し上げます。\n\n⚾️ まずは一度、グラウンドへ！個別見学・体験はいつでも歓迎です。\n🔗 ${ENTRY_URL}`
+              : `🤝【〇〇少年野球の皆さん、来てくれてありがとう！】⚾️✨\n本日の練習に、地域の学童野球チームの選手たちが体験に来てくれました！\n\n最初は緊張していた小学生も、先輩たちと一緒にノックを受けるうちに笑顔いっぱいに😆\n「楽しかった！」「また来たい！」という言葉に、${teamName}の選手たちも大喜びでした！\n\n「まずは一度、グラウンドへ！」いつでも遊びに来てくださいね！🙌\n🔗 体験詳細・日程はこちら：${ENTRY_URL}`
           );
         } else if (eventId === 'daily_schedule') {
           setCustomMemo(
             isFb
-              ? `【越谷ボーイズの週末スケジュールとサポート環境】\n\n中学硬式野球をご検討中の保護者様より多く寄せられる「土日の拘束時間や当番」に関する活動の様子をご紹介いたします。\n\n■ 週末の標準スケジュール\n・8:30 集合・元気な挨拶（凡事徹底）\n・9:00 体幹ウォーミングアップ・怪我予防の基礎反復\n・12:00 昼食・休憩（仲間との楽しい時間）\n・13:00 実戦形式・シートノック\n・16:30 グラウンド整備・道具手入れ・解散\n\n当チームでは家庭や学業とのバランスを重視し、保護者のお茶当番負担の軽減を推進しています。無理のない協力体制で選手たちを温かく支えています。`
-              : `⏰【越谷ボーイズのある週末の1日】⚾️✨\n「中学の硬式チームって、土日はどんなスケジュール？」\nそんな疑問にお答えします！\n\n☀️ 8:30 集合・挨拶（凡事徹底！）\n⚾️ 9:00 ウォーミングアップ・怪我を防ぐ基礎練習\n🍙 12:00 お昼ごはん（みんなで楽しく♪）\n🔥 13:00 実戦・バッティング練習\n✨ 16:30 グラウンド整備・道具を磨いて解散！\n\n保護者のお茶当番負担も軽減を進めており、無理なく笑顔で応援できる環境です😊 ぜひ一度見学会で雰囲気を確かめてみてくださいね！`
+              ? `【${teamName}の週末スケジュールとサポート環境】\n\n中学硬式野球をご検討中の保護者様より多く寄せられる「土日の拘束時間や当番」に関する活動の様子をご紹介いたします。\n\n■ 週末の標準スケジュール\n・8:30 集合・元気な挨拶（凡事徹底）\n・9:00 体幹ウォーミングアップ・怪我予防の基礎反復\n・12:00 昼食・休憩（仲間との楽しい時間）\n・13:00 実戦形式・シートノック\n・16:30 グラウンド整備・道具手入れ・解散\n\n当チームでは家庭や学業とのバランスを重視し、保護者のお茶当番負担の軽減を推進しています。無理のない協力体制で選手たちを温かく支えています。\n\n⚾️ まずは一度、グラウンドへ！チームの雰囲気を確かめてみませんか？\n🔗 見学・体験お申込み：${ENTRY_URL}`
+              : `⏰【${teamName}のある週末の1日】⚾️✨\n「中学の硬式チームって、土日はどんなスケジュール？」\nそんな疑問にお答えします！\n\n☀️ 8:30 集合・挨拶（凡事徹底！）\n⚾️ 9:00 ウォーミングアップ・怪我を防ぐ基礎練習\n🍙 12:00 お昼ごはん（みんなで楽しく♪）\n🔥 13:00 実戦・バッティング練習\n✨ 16:30 グラウンド整備・道具を磨いて解散！\n\n保護者のお茶当番負担も軽減を進めており、無理なく笑顔で応援できる環境です😊\nまずは一度、グラウンドへ！見学会でお待ちしています！\n🔗 ${ENTRY_URL}`
           );
         } else if (eventId === 'practice') {
           setCustomMemo(
             isFb
-              ? `【普段の練習風景より：『凡事徹底』の精神】\n\n越谷ボーイズ（NPO法人 越谷K・クラブ）では、週末の練習において「当たり前のことを、人並み外れて徹底して行う（凡事徹底）」を指導方針の柱に据えています。\n\n挨拶、靴や道具の整頓、グラウンド整備への真摯な姿勢。高校野球、そして社会に出ても通用する人間力を育てることこそが私たちの使命です。選手たちは泥だらけになりながら、確かな一歩を積み重ねております。`
-              : `⚾️【日々の積み重ねが未来をつくる】✨\n越谷ボーイズのグラウンドでは、今日も元気な挨拶と全力疾走が響いています！\n\n「ボールを大切にする」「ベンチの荷物を美しく整える」\n技術の上達と同じくらい、道具や仲間へのリスペクトを日常から徹底しています👟🎒\n当たり前の徹底が、ピンチの時に一歩前へ踏み出す勇気になります！今週末も全員野球で顔晴ります！💪`
+              ? `【普段の練習風景より：『凡事徹底』の精神】\n\n${teamName}（NPO法人 越谷K・クラブ）では、週末の練習において「当たり前のことを、人並み外れて徹底して行う（凡事徹底）」を指導方針の柱に据えています。\n\n挨拶、靴や道具の整頓、グラウンド整備への真摯な姿勢。高校野球、そして社会に出ても通用する人間力を育てることこそが私たちの使命です。選手たちは泥だらけになりながら、確かな一歩を積み重ねております。\n\n⚾️ まずは一度、グラウンドへ！見学・体験は随時受付中です。\n🔗 ${ENTRY_URL}`
+              : `⚾️【日々の積み重ねが未来をつくる】✨\n${teamName}のグラウンドでは、今日も元気な挨拶と全力疾走が響いています！\n\n「ボールを大切にする」「ベンチの荷物を美しく整える」\n技術の上達と同じくらい、道具や仲間へのリスペクトを日常から徹底しています👟🎒\n当たり前の徹底が、ピンチの時に一歩前へ踏み出す勇気になります！今週末も全員野球で顔晴ります！💪\n\n⚾️ まずは一度、グラウンドへ！体験受付中：${ENTRY_URL}`
           );
         } else if (eventId === 'summer_camp') {
           setCustomMemo(
             isFb
-              ? `【夏季強化合宿 終了のご報告】\n\n夏季強化合宿が無事全日程を終了いたしました。本合宿では「自立と協調」をテーマに掲げ、技術反復のみならず共同生活を通じた自己管理・感謝の心を養いました。\n選手たちは厳しいメニューを全員の気迫で乗り越え、チームとして確固たる結束力を確立いたしました。手厚い体調管理・食事サポートを担っていただいた保護者の皆様に心より厚く御礼申し上げます。`
-              : `☀️【夏合宿！全員で乗り越えた絆の夏】🔥\n猛暑に負けず、夏季強化合宿を無事に走り切りました！⚾️\n\n朝のランニングから日が暮れるまでの徹底ノック、夜のミーティングやみんなで囲む大盛りごはん🍚✨\n苦しい時こそ仲間同士で声を掛け合い、限界をひとつ突破した選手たちの表情はたくましさそのものです！秋の大会へ弾みをつけます！💪`
+              ? `【夏季強化合宿 終了のご報告】\n\n${teamName}夏季強化合宿が無事全日程を終了いたしました。本合宿では「自立と協調」をテーマに掲げ、技術反復のみならず共同生活を通じた自己管理・感謝の心を養いました。\n選手たちは厳しいメニューを全員の気迫で乗り越え、チームとして確固たる結束力を確立いたしました。手厚い体調管理・食事サポートを担っていただいた保護者の皆様に心より厚く御礼申し上げます。\n\n⚾️ まずは一度、グラウンドへ！秋の体験練習受付中：${ENTRY_URL}`
+              : `☀️【夏合宿！全員で乗り越えた絆の夏】🔥\n猛暑に負けず、夏季強化合宿を無事に走り切りました！⚾️\n\n朝のランニングから日が暮れるまでの徹底ノック、夜のミーティングやみんなで囲む大盛りごはん🍚✨\n苦しい時こそ仲間同士で声を掛け合い、限界をひとつ突破した選手たちの表情はたくましさそのものです！秋の大会へ弾みをつけます！💪\n\n⚾️ まずは一度、グラウンドへ！体験詳細はこちら：${ENTRY_URL}`
           );
         } else if (eventId === 'parents') {
           setCustomMemo(
             isFb
-              ? `【父母会・総会開催のご報告と感謝】\n\n越谷ボーイズ（NPO法人 越谷K・クラブ）の父母会・総会を開催いたしました。指導方針の共有やサポート体制について建設的な意見交換が行われ、指導者・保護者が「チームの両輪」となって選手たちの成長を支えていく体制を再確認いたしました。子どもたちの夢を共に支えてくださる保護者の皆様の献身的なご尽力に深く感謝申し上げます。`
-              : `🤝【選手たちの笑顔を支える強力な応援団！】✨\nいつも選手たちが思いきり白球を追えるよう、温かく見守り支えてくれる保護者の皆様、本当にありがとうございます！\n\n越谷ボーイズでは、保護者の当番負担を減らしながら、無理のない範囲で笑顔で協力し合う環境づくりを進めています😊 グラウンドに広がる温かい声援が選手たちの一番のエネルギーです！⚾️`
+              ? `【父母会・総会開催のご報告と感謝】\n\n${teamName}（NPO法人 越谷K・クラブ）の父母会・総会を開催いたしました。指導方針の共有やサポート体制について建設的な意見交換が行われ、指導者・保護者が「チームの両輪」となって選手たちの成長を支えていく体制を再確認いたしました。子どもたちの夢を共に支えてくださる保護者の皆様の献身的なご尽力に深く感謝申し上げます。\n\n⚾️ まずは一度、グラウンドへ！体験練習のご相談もお気軽にどうぞ。\n🔗 ${ENTRY_URL}`
+              : `🤝【選手たちの笑顔を支える強力な応援団！】✨\nいつも選手たちが思いきり白球を追えるよう、温かく見守り支えてくれる保護者の皆様、本当にありがとうございます！\n\n${teamName}では、保護者の当番負担を減らしながら、無理のない範囲で笑顔で協力し合う環境づくりを進めています😊 グラウンドに広がる温かい声援が選手たちの一番のエネルギーです！⚾️\n\n⚾️ まずは一度、グラウンドへ！詳細はこちら：${ENTRY_URL}`
+          );
+        } else if (eventId === 'sponsor') {
+          setCustomMemo(
+            isFb
+              ? `【創部30期・3,600名を超える絆とともに｜NPO法人 越谷K・クラブ オフィシャルスポンサー募集のご案内】\n\n日頃より、NPO法人 越谷K・クラブ（${teamName}）の活動に温かいご理解とご高配を賜り、心より御礼申し上げます。\n\n当クラブ（越谷ボーイズ／越谷中央ボーイズ）は地域の皆様、熱心な指導陣、そして歴代保護者の皆様に支えられ、本年【創部30期】の節目を迎えました。これまでに約900名の卒団生を送り出し、ご家族を含めると【3,600名を超える巨大なファミリーネットワーク】が今も地域に息づいております。\n\n現在も県内最大級となる約100名の選手がグラウンドに集い、100名を超える指導・役員スタッフのもとで白球を追っています。\n\n私たちが目指すのは単なる勝敗や技術向上にとどまらず、野球を通じた「青少年の健全育成」です。礼儀、挨拶、感謝、協調性を重んじ、社会に出てからも誇りを持てる人間力を育む「凡事徹底」の精神を大切にしてまいりました。\n\n100名規模の選手たちが安全に活動するためのクラブバスの維持・運行管理や、安全な硬式練習用具の確保など、環境維持には地域の支えが不可欠です。ご家庭の負担を可能な限り抑え、子どもたちが安心して野球に打ち込める環境を守るため、当クラブの理念に共感し、共に歩んでくださる「オフィシャルスポンサー企業様・サポーター様」を広く募集いたします。\n\n詳しい理念やサポート内容、ご相談につきましては、公式ホームページよりご確認いただけます。\n🔗 クラブ理念・概要：${ABOUT_URL}\n🔗 お問い合わせ窓口：${ENTRY_URL}`
+              : `⚾️【祝・創部30期！3,600名の絆と未来をつなぐオフィシャルスポンサー募集】✨\n\nいつも${teamName}を温かく応援していただき、ありがとうございます！\n\n越谷ボーイズ・越谷中央ボーイズ（NPO法人 越谷K・クラブ）は皆様の温かい支えを受け、今年【創部30期】を迎えました🎉\nこれまで送り出した卒団生は約900名。ご家族を合わせると【3,600名を超える大きな絆】が今も地域に広がっています🤝✨\n\n現在も約100名の選手たち、そして100名を超えるスタッフがグラウンドに集い、全員野球で白球を追っています！\n\n私たちが目指すのは、単なる勝ち負けだけではありません。野球を通じた「青少年の健全育成」。大きな声での挨拶、道具を磨く姿、仲間への感謝など、社会に出てからも胸を張って生き抜く「人間力」を育てることです。\n\n100名の仲間たちが安全に遠征へ向かう「クラブバスの維持」、安全な「ボールや練習環境の確保」など、子どもたちの夢を地域みんなで支えるサポーター企業様・個人様を募集いたします！\n\n詳しいサポート内容やお問い合わせにつきましては、プロフィールのリンク（公式HP）よりご覧いただけます👇\n🔗 @koshigaya_boys\n（公式理念ページ：${ABOUT_URL}）`
           );
         }
-      }, [eventId, format, number, nameJa, nameEn, grade, position, originTeam, playerMessage, tournamentName, stadiumName, opponentName, myScore, opponentScore, matchMood, matchHighlight]);
+      }, [eventId, format, teamKey, number, nameJa, nameEn, grade, position, handedness, originTeam, playerMessage, tournamentName, stadiumName, opponentName, myScore, opponentScore, matchMood, matchHighlight]);
 
       // 写真ファイル選択
       const handlePhotoSelect = (e) => {
@@ -618,7 +578,7 @@
         }
       };
 
-      // 野球カード画像のダウンロード保存
+      // カード保存
       const downloadCard = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -626,7 +586,7 @@
         try {
           const imageLink = canvas.toDataURL('image/png');
           const a = document.createElement('a');
-          a.download = `越谷ボーイズ選手カード_${nameJa || '選手'}.png`;
+          a.download = `${teamName}_選手カード_${nameJa || '選手'}.png`;
           a.href = imageLink;
           document.body.appendChild(a);
           a.click();
@@ -639,9 +599,33 @@
         }
       };
 
-      // 投稿本文の構築
+      // 目的・締めくくり文言（チーム名連動）
+      const buildCtaText = (isFb) => {
+        const ctaMap = {
+          experience: {
+            insta: `＼ まずは一度、グラウンドへ！ ／\n体験練習・見学はいつでも大歓迎です⚾️✨\n日程の確認・かんたんWeb申込みはこちらから👇\n🔗 ${ENTRY_URL}\n（プロフィールリンク @koshigaya_boys からも直接アクセスできます📩）`,
+            fb: `【まずは一度、グラウンドへ！ 体験練習・見学受付中】\n${teamName}では、新入団員（新中1・現小6）を随時募集しております。\nチームの雰囲気や練習日程のご確認、参加お申し込みは下記専用ページよりお気軽にご連絡ください。\n🔗 体験練習詳細・お申込み：${ENTRY_URL}`
+          },
+          cheer: {
+            insta: `選手たちのひたむきなプレーに、温かい「いいね！」やコメントでエールを届けていただけると大きな励みになります⚾️💬✨\nいつも応援ありがとうございます！\n\n⚾️ まずは一度、グラウンドへ！体験詳細はこちら：\n${ENTRY_URL}`,
+            fb: `日頃より温かく見守ってくださる皆様の応援が、選手たちの最大の力となっております。引き続き${teamName}への温かいご声援をよろしくお願い申し上げます。\n\n【体験練習・見学のご案内】まずは一度、グラウンドへ！\n🔗 詳細・お申込み：${ENTRY_URL}`
+          },
+          thanks: {
+            insta: `いつも温かく背中を押してくださる指導陣、保護者の皆様、そして地域の皆様に心から感謝いたします✨\nこれからも全員野球で恩返ししていきます！\n\n⚾️ まずは一度、グラウンドへ！体験詳細はこちら：\n${ENTRY_URL}`,
+            fb: `大会を支えてくださる役員・審判員の皆様、日頃より惜しみない愛情を注いでくださる指導者・保護者の皆様に、改めて深く感謝申し上げます。\n\n【体験練習・見学のご案内】まずは一度、グラウンドへ！\n🔗 詳細・お申込み：${ENTRY_URL}`
+          },
+          ob_report: {
+            insta: `${teamName}の伝統をしっかり引き継ぎ、後輩たちも全力で前進しています！OB・OGの先輩方、いつでもグランドへ遊びに来てください⚾️✨\n\n⚾️ 新入団員も募集中！まずは一度、グラウンドへ：\n${ENTRY_URL}`,
+            fb: `${teamName}の礎を築いてこられた歴代OB・OGの皆様、ならびに関係各位に謹んでご報告申し上げます。伝統の誇りを胸に、現役世代も全力で精進を続けてまいります。\n\n【新入団員募集・体験受付中】まずは一度、グラウンドへ！\n🔗 詳細・お申込み：${ENTRY_URL}`
+          }
+        };
+
+        const target = ctaMap[purpose] || ctaMap.experience;
+        return isFb ? target.fb : target.insta;
+      };
+
+      // 本文構築
       const buildOutput = () => {
-        const cta = CTAS[purpose] || CTAS.experience;
         const isFb = format === 'facebook';
         const isReel = format === 'insta_reel';
 
@@ -649,30 +633,32 @@
 
         if (isReel) {
           const reelPrefix = eventId === 'player'
-            ? `🔥【今週のキラリ選手！ショート動画】\n背番号#${number || '00'} ${nameJa}選手の熱いプレーをお届け🎥✨\n\n`
-            : `🔥【越谷ボーイズ ショート動画】\nグラウンドの熱気・笑顔・全力プレーをお届け🎥✨\n\n`;
+            ? `🔥【今週のキラリ選手！ショート動画】\n${teamName} 背番号#${number || '00'} ${nameJa}選手の熱いプレーをお届け🎥✨\n\n`
+            : `🔥【${teamName} ショート動画】\nグラウンドの熱気・笑顔・全力プレーをお届け🎥✨\n\n`;
           body = reelPrefix + body;
         }
 
-        const ctaText = isFb ? cta.fb : cta.insta;
+        const ctaText = buildCtaText(isFb);
 
         const signature = isFb
-          ? `\n━━━━━━━━━━━━━━━━━━━━━━━\n越谷ボーイズ（NPO法人 越谷K・クラブ）\n■ 公式サイト：https://koshigaya-boys.com/\n■ 活動拠点：越谷市内・専用グラウンド\n━━━━━━━━━━━━━━━━━━━━━━━`
-          : `\n-----------------------------\n⚾️ 越谷ボーイズ（NPO法人 越谷K・クラブ）\n「凡事徹底」高校野球へつなぐ人間育成\n-----------------------------`;
+          ? `\n━━━━━━━━━━━━━━━━━━━━━━━\n${teamName}（NPO法人 越谷K・クラブ）\n※越谷ボーイズ / 越谷中央ボーイズ\n■ 体験専用ページ：${ENTRY_URL}\n■ 公式サイト：https://koshigaya-boys.com/\n■ 活動拠点：越谷市内・専用グラウンド\n━━━━━━━━━━━━━━━━━━━━━━━`
+          : `\n-----------------------------\n⚾️ ${teamName}（NPO法人 越谷K・クラブ）\n「凡事徹底」高校野球へつなぐ人間育成\n👉 体験申込み：${ENTRY_URL}\n-----------------------------`;
 
-        const tags = isFb ? TAGS_FB : TAGS_INSTA;
+        const teamTag = teamKey === 'chuo' ? '#越谷中央ボーイズ #越谷ボーイズ' : '#越谷ボーイズ #越谷中央ボーイズ';
+        const tags = isFb
+          ? `${teamTag} #ボーイズリーグ #中学硬式野球 #越谷Kクラブ #文武両道 #青少年健全育成 #体験練習受付中`
+          : `${teamTag} #中学硬式野球 #ボーイズリーグ #凡事徹底 #少年野球 #体験練習受付中 #まずは一度グラウンドへ #越谷市 #高校野球へつなぐ #野球好きな人と繋がりたい`;
 
         return `${body}\n\n${ctaText}\n\n${signature}\n\n${tags}`;
       };
 
       const finalPostText = buildOutput();
 
-      // クリップボードコピー
       const copyToClipboard = (key = 'main') => {
         const done = () => {
           setCopiedKey(key);
           showToast('✓ 本文をコピーしました！');
-          setShowPostCopyModal(true); // コピー完了後に次の案内モーダルを表示
+          setShowPostCopyModal(true);
           setTimeout(() => setCopiedKey(''), 2200);
         };
 
@@ -699,14 +685,13 @@
         document.body.removeChild(el);
       };
 
-      // ページ一番上へスムーズスクロール
       const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setShowPostCopyModal(false);
       };
 
-      // 安全な全体初期化リセット（確認モーダル経由）
       const handleConfirmReset = () => {
+        setTeamKey('koshigaya');
         setEventId('tournament');
         setFormat('insta_feed');
         setPurpose('experience');
@@ -730,7 +715,6 @@
         showToast('最初に戻しました 🔄');
       };
 
-      // 安心チェックの検出
       const ngHits = NG_WORDS.filter(w => customMemo.includes(w.word));
 
       return (
@@ -744,11 +728,10 @@
             </div>
           )}
 
-          {/* ★ コピー完了後の次のアクション案内モーダル（お母さん安心設計） */}
+          {/* コピー完了後案内モーダル */}
           {showPostCopyModal && (
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 fade-in">
               <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-2 border-emerald-500 text-center relative">
-                {/* 閉じる×ボタン */}
                 <button
                   type="button"
                   onClick={() => setShowPostCopyModal(false)}
@@ -770,7 +753,6 @@
                 </p>
 
                 <div className="space-y-2.5">
-                  {/* アプリを開くボタン（フォーマットに応じて自動切り替え） */}
                   {format === 'facebook' ? (
                     <a
                       href="https://www.facebook.com/"
@@ -795,7 +777,6 @@
                     </a>
                   )}
 
-                  {/* 画面の一番上へ戻るボタン */}
                   <button
                     type="button"
                     onClick={scrollToTop}
@@ -809,7 +790,7 @@
             </div>
           )}
 
-          {/* 安全なリセット確認モーダル（うっかり全消去を防止） */}
+          {/* 安全なリセット確認モーダル */}
           {showResetConfirm && (
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 fade-in">
               <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-2 border-stone-200">
@@ -842,7 +823,6 @@
 
           {/* ヘッダーカード */}
           <header className="bg-cardMain text-cardSub rounded-3xl shadow-md p-4 sm:p-5 mb-4 border-b-4 border-[#8B3738] relative overflow-hidden">
-            {/* 上部バッジと独立した安全リセットボタン */}
             <div className="flex items-center justify-between gap-2 mb-3">
               <span className="bg-cardSub text-cardMain text-xs font-black px-3 py-1 rounded-full shadow-inner tracking-wider">
                 考えるを、ひとりにしない。
@@ -857,7 +837,6 @@
               </button>
             </div>
 
-            {/* ロゴ ＆ タイトル */}
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-cardSub p-0.5 shadow shrink-0 overflow-hidden flex items-center justify-center border-2 border-white/60">
                 <img
@@ -876,18 +855,47 @@
                   style={{
                     whiteSpace: 'nowrap',
                     wordBreak: 'keep-all',
-                    fontSize: 'clamp(16px, 4.8vw, 24px)'
+                    fontSize: 'clamp(15px, 4.4vw, 22px)'
                   }}
                   className="font-black tracking-tight leading-none text-cardSub"
                 >
-                  越谷ボーイズ かんたん広報ノート
+                  越谷ボーイズ / 越谷中央ボーイズ
                 </h1>
-                <p className="text-xs text-cardSub/90 mt-1 truncate">
-                  選ぶだけで1分でSNS投稿文＆カード画像が完成！
+                <p className="text-xs text-cardSub/90 mt-1 font-bold">
+                  かんたん広報ノート ＆ 野球カードメーカー
                 </p>
               </div>
             </div>
           </header>
+
+          {/* ★ チーム選択プルダウンカード */}
+          <div className="bg-white rounded-3xl p-3.5 sm:p-4 border-2 border-cardMain/40 shadow-sm mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xl shrink-0">🧢</span>
+              <div>
+                <span className="text-xs font-bold text-stone-500 block leading-tight">
+                  どちらのチームの投稿ですか？
+                </span>
+                <span className="text-sm font-black text-stone-800 truncate block">
+                  対象チームを選択
+                </span>
+              </div>
+            </div>
+
+            <div className="relative shrink-0">
+              <select
+                value={teamKey}
+                onChange={(e) => setTeamKey(e.target.value)}
+                className="appearance-none bg-[#FAF7F5] border-2 border-cardMain text-cardMain font-black text-sm sm:text-base py-2 pl-3 pr-8 rounded-2xl shadow-inner outline-none cursor-pointer"
+              >
+                <option value="koshigaya">⚾️ 越谷ボーイズ</option>
+                <option value="chuo">⚾️ 越谷中央ボーイズ</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-cardMain font-bold">
+                ▼
+              </div>
+            </div>
+          </div>
 
           {/* 父母さんのための 使い方ガイド（アコーディオン） */}
           <div className="mb-4">
@@ -930,7 +938,7 @@
                     <span>たったの3ステップで完成！</span>
                   </h3>
                   <ol className="space-y-1.5 text-stone-700 leading-relaxed text-xs sm:text-sm list-decimal list-inside">
-                    <li><strong>行事を選ぶ：</strong>「選手紹介」「体験会」「試合結果」など、今日の出来事をタップ。</li>
+                    <li><strong>チームと行事を選ぶ：</strong>「越谷ボーイズ / 越谷中央ボーイズ」を選び、今日の出来事をタップ。</li>
                     <li><strong>写真やメモを確認：</strong>選手カードを作るときは写真を選んで「カード画像を保存」を押すだけ！</li>
                     <li><strong>画面下の「本文をコピー」：</strong>Instagramにそのまま貼り付け（ペースト）して投稿完了です。</li>
                   </ol>
@@ -950,7 +958,7 @@
                   今日の行事・出来事を選ぶ
                 </h2>
                 <p className="text-xs text-stone-500">
-                  タップするとおすすめの文章が自動でセットされます
+                  タップすると【{teamName}】の文章が自動でセットされます
                 </p>
               </div>
             </div>
@@ -988,7 +996,7 @@
             </div>
           </section>
 
-          {/* 【連動エリア】選手紹介が選ばれている時に展開する「プロ野球カードメーカー」 */}
+          {/* 選手カードメーカー */}
           {eventId === 'player' && (
             <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-md border-2 border-cardMain mb-4 fade-in">
               <div className="border-b border-stone-200 pb-3 mb-4">
@@ -996,19 +1004,19 @@
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">⚾️</span>
                     <h2 className="font-black text-cardMain text-base sm:text-lg">
-                      プロ野球チップス風 カード画像メーカー
+                      プロ野球チップス風 カードメーカー
                     </h2>
                   </div>
                   <span className="bg-amber-500 text-stone-900 text-xs font-black px-2.5 py-1 rounded-full shrink-0 shadow-sm">
-                    キラカード仕様
+                    {teamName}
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-stone-600 mt-1">
-                  写真を選ぶだけで本格カードが完成！お好みのカードカラーも選べます
+                  写真を選ぶだけで本格カードが完成！お好みのカラーデザインも選べます
                 </p>
               </div>
 
-              {/* ★ 新機能：カードデザイン（3つのテーマカラー）選択ボタン */}
+              {/* テーマカラー切り替え */}
               <div className="mb-4">
                 <label className="block text-xs sm:text-sm font-black text-stone-800 mb-2 flex items-center gap-1.5">
                   <span>🎨</span>
@@ -1065,7 +1073,6 @@
                   <canvas ref={canvasRef} className="w-full h-full object-contain block" />
                 </div>
 
-                {/* カードダウンロードボタン */}
                 <button
                   type="button"
                   onClick={downloadCard}
@@ -1073,7 +1080,7 @@
                   className="w-full max-w-[320px] mt-3.5 py-3.5 px-4 bg-gradient-to-r from-cardMain to-[#851E20] text-cardSub font-black rounded-2xl text-sm sm:text-base shadow-lg hover:opacity-95 active:scale-95 transition flex items-center justify-center gap-2 border border-white/30"
                 >
                   <span className="text-lg">💾</span>
-                  <span>カード画像をスマホの写真に保存する</span>
+                  <span>{teamName}の選手カードを保存する</span>
                 </button>
                 <p className="text-xs text-stone-500 mt-2 text-center font-medium">
                   ※Instagram投稿の1枚目（表紙）にそのまま使えます
@@ -1082,8 +1089,6 @@
 
               {/* 写真・選手情報 入力フォーム */}
               <div className="bg-[#FAF7F5] p-4 rounded-2xl border border-stone-200 space-y-3.5">
-                
-                {/* 写真選択（大きくタップしやすい親切ボタン枠） */}
                 <div>
                   <label className="block text-sm font-black text-stone-800 mb-1.5 flex items-center gap-1.5">
                     <span>📷</span>
@@ -1103,7 +1108,6 @@
                   </label>
                 </div>
 
-                {/* 背番号 ＆ 選手名（漢字） */}
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div>
                     <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">背番号</label>
@@ -1127,7 +1131,6 @@
                   </div>
                 </div>
 
-                {/* 選手名（ローマ字） */}
                 <div className="text-sm">
                   <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">
                     選手名（ローマ字・カード下部に大きく印字）
@@ -1141,7 +1144,6 @@
                   />
                 </div>
 
-                {/* 学年 ＆ ポジション ＆ 投打（プロスペック） */}
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div>
                     <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">学年</label>
@@ -1180,7 +1182,6 @@
                   </div>
                 </div>
 
-                {/* 出身学童チーム（キラー情報） */}
                 <div className="text-sm">
                   <label className="block font-black text-cardMain mb-1 text-xs sm:text-sm flex items-center gap-1">
                     <span>★</span>
@@ -1198,7 +1199,6 @@
                   </p>
                 </div>
 
-                {/* 後輩へのメッセージ */}
                 <div className="text-sm">
                   <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">
                     後輩・小学生への一言メッセージ（投稿文に反映されます）
@@ -1215,7 +1215,7 @@
             </section>
           )}
 
-          {/* ★【新登場連動エリア】大会・公式戦が選ばれている時に展開する「公式戦スコア簡単シート」 */}
+          {/* 公式戦・試合結果入力シート */}
           {eventId === 'tournament' && (
             <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-md border-2 border-cardMain mb-4 fade-in">
               <div className="border-b border-stone-200 pb-3 mb-4">
@@ -1227,7 +1227,7 @@
                     </h2>
                   </div>
                   <span className="bg-cardMain text-cardSub text-xs font-black px-2.5 py-1 rounded-full shrink-0 shadow-sm">
-                    スコア連動
+                    {teamName}
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-stone-600 mt-1">
@@ -1235,7 +1235,7 @@
                 </p>
               </div>
 
-              {/* 試合の雰囲気・勝敗をワンタップで選ぶボタン */}
+              {/* 試合の雰囲気・勝敗 */}
               <div className="mb-4">
                 <label className="block text-xs sm:text-sm font-black text-stone-800 mb-2 flex items-center gap-1.5">
                   <span>⚡️</span>
@@ -1288,8 +1288,6 @@
 
               {/* 穴埋め入力フォーム */}
               <div className="bg-[#FAF7F5] p-4 rounded-2xl border border-stone-200 space-y-3.5">
-                
-                {/* 大会名 ＆ 試合会場 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div>
                     <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm">
@@ -1317,17 +1315,15 @@
                   </div>
                 </div>
 
-                {/* スコア・対戦相手（大きく見やすい専用ボード風） */}
                 <div className="bg-white p-3.5 rounded-2xl border-2 border-stone-300">
                   <label className="block font-black text-stone-800 mb-2 text-xs sm:text-sm text-center">
                     ⚾️ 試合スコア・対戦カード
                   </label>
                   
                   <div className="flex items-center justify-between gap-2">
-                    {/* 越谷ボーイズ */}
                     <div className="flex-1 text-center">
                       <div className="font-black text-cardMain text-xs sm:text-sm mb-1 truncate">
-                        越谷ボーイズ
+                        {teamName}
                       </div>
                       <input
                         type="number"
@@ -1343,7 +1339,6 @@
                       ー
                     </div>
 
-                    {/* 対戦相手 */}
                     <div className="flex-1 text-center">
                       <div className="mb-1">
                         <input
@@ -1366,7 +1361,6 @@
                   </div>
                 </div>
 
-                {/* 今日のハイライト・一言 */}
                 <div className="text-sm">
                   <label className="block font-bold text-stone-800 mb-1 text-xs sm:text-sm flex items-center justify-between">
                     <span>💬 今日のハイライト・ナイスプレー（一言メモ）</span>
@@ -1451,7 +1445,7 @@
             </div>
           </section>
 
-          {/* ステップ③ 伝えたい想い・本文の確認（編集可能） */}
+          {/* ステップ③ 伝えたい想い・本文の確認 */}
           <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-stone-200 mb-4">
             <div className="flex items-center justify-between border-b border-stone-100 pb-2 mb-2.5">
               <div className="flex items-center gap-2.5">
@@ -1477,7 +1471,6 @@
               className="w-full p-3.5 bg-stone-50 border border-stone-200 rounded-2xl text-sm sm:text-base leading-relaxed text-stone-800 outline-none focus:bg-white focus:border-cardMain transition"
             />
 
-            {/* 安心チェック機能（アラート） */}
             {ngHits.length > 0 && (
               <div className="mt-2.5 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-xs sm:text-sm space-y-1 fade-in">
                 <div className="font-bold flex items-center gap-1.5 text-amber-800">
@@ -1510,32 +1503,85 @@
             </div>
 
             <div className="grid grid-cols-1 gap-2.5">
-              {Object.keys(CTAS).map(k => {
-                const c = CTAS[k];
-                const isSelected = purpose === k;
-                return (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => setPurpose(k)}
-                    className={`p-3.5 text-left rounded-2xl border-2 flex items-start gap-3 transition-all active:scale-[0.99] ${
-                      isSelected
-                        ? 'border-cardMain bg-cardSub/40 text-cardMain ring-2 ring-cardMain/30'
-                        : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
-                    }`}
-                  >
-                    <span className="text-xl shrink-0 mt-0.5">{c.icon}</span>
-                    <div className="min-w-0">
-                      <div className={`text-sm sm:text-base font-black ${isSelected ? 'text-cardMain' : 'text-stone-800'}`}>
-                        {c.label}
-                      </div>
-                      <div className="text-xs text-stone-500 mt-0.5">
-                        {c.sub}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+              <button
+                type="button"
+                onClick={() => setPurpose('experience')}
+                className={`p-3.5 text-left rounded-2xl border-2 flex items-start gap-3 transition-all active:scale-[0.99] ${
+                  purpose === 'experience'
+                    ? 'border-cardMain bg-cardSub/40 text-cardMain ring-2 ring-cardMain/30'
+                    : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                }`}
+              >
+                <span className="text-xl shrink-0 mt-0.5">📝</span>
+                <div className="min-w-0">
+                  <div className={`text-sm sm:text-base font-black ${purpose === 'experience' ? 'text-cardMain' : 'text-stone-800'}`}>
+                    体験練習に来てほしい（まずは一度、グラウンドへ！）
+                  </div>
+                  <div className="text-xs text-stone-500 mt-0.5">
+                    「体験申し込みURL」を固定で案内します
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPurpose('cheer')}
+                className={`p-3.5 text-left rounded-2xl border-2 flex items-start gap-3 transition-all active:scale-[0.99] ${
+                  purpose === 'cheer'
+                    ? 'border-cardMain bg-cardSub/40 text-cardMain ring-2 ring-cardMain/30'
+                    : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                }`}
+              >
+                <span className="text-xl shrink-0 mt-0.5">📣</span>
+                <div className="min-w-0">
+                  <div className={`text-sm sm:text-base font-black ${purpose === 'cheer' ? 'text-cardMain' : 'text-stone-800'}`}>
+                    子どもたちの頑張りを見てほしい（応援のお願い）
+                  </div>
+                  <div className="text-xs text-stone-500 mt-0.5">
+                    「いいね！や温かいエール」をお願いします
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPurpose('thanks')}
+                className={`p-3.5 text-left rounded-2xl border-2 flex items-start gap-3 transition-all active:scale-[0.99] ${
+                  purpose === 'thanks'
+                    ? 'border-cardMain bg-cardSub/40 text-cardMain ring-2 ring-cardMain/30'
+                    : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                }`}
+              >
+                <span className="text-xl shrink-0 mt-0.5">🙏</span>
+                <div className="min-w-0">
+                  <div className={`text-sm sm:text-base font-black ${purpose === 'thanks' ? 'text-cardMain' : 'text-stone-800'}`}>
+                    感謝を伝えたい（指導者・保護者・大会関係者へ）
+                  </div>
+                  <div className="text-xs text-stone-500 mt-0.5">
+                    「皆様の温かい支えに感謝します」と結びます
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPurpose('ob_report')}
+                className={`p-3.5 text-left rounded-2xl border-2 flex items-start gap-3 transition-all active:scale-[0.99] ${
+                  purpose === 'ob_report'
+                    ? 'border-cardMain bg-cardSub/40 text-cardMain ring-2 ring-cardMain/30'
+                    : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                }`}
+              >
+                <span className="text-xl shrink-0 mt-0.5">🤝</span>
+                <div className="min-w-0">
+                  <div className={`text-sm sm:text-base font-black ${purpose === 'ob_report' ? 'text-cardMain' : 'text-stone-800'}`}>
+                    OB・地域へ活動を報告したい（伝統の継承と信頼）
+                  </div>
+                  <div className="text-xs text-stone-500 mt-0.5">
+                    「先輩方、いつでもグラウンドへ！」と結びます
+                  </div>
+                </div>
+              </button>
             </div>
           </section>
 
@@ -1548,10 +1594,10 @@
                 </span>
                 <div>
                   <h3 className="font-black text-stone-800 text-sm sm:text-base">
-                    完成した文章（これを貼り付けます）
+                    完成した文章（{teamName}）
                   </h3>
                   <p className="text-xs text-stone-500">
-                    ハッシュタグや公式サイトへの案内も自動で入っています
+                    「まずは一度、グラウンドへ！」と体験案内URLが固定されています
                   </p>
                 </div>
               </div>
@@ -1572,7 +1618,7 @@
             </pre>
           </section>
 
-          {/* スマートフォン用：最下部固定コピーバー（安心の押しやすさ・セーフエリア対応） */}
+          {/* スマートフォン用：最下部固定コピーバー */}
           <div className="fixed bottom-0 left-0 right-0 p-3.5 pb-safe bg-white/95 backdrop-blur-md border-t border-stone-200 shadow-2xl z-40 sm:hidden">
             <div className="max-w-xl mx-auto flex items-center gap-2">
               <button
@@ -1583,18 +1629,77 @@
                 }`}
               >
                 <span className="text-lg">📋</span>
-                <span>{copiedKey === 'bottom' ? '✓ コピー完了！SNSに貼るだけ' : '本文をコピーする（SNSに貼るだけ）'}</span>
+                <span>{copiedKey === 'bottom' ? `✓ ${teamName}の文章をコピー完了！` : `${teamName}の文章をコピーする`}</span>
               </button>
             </div>
           </div>
 
+          {/* ★ オフィシャルスポンサー・サポーター紹介フッターカード */}
+          <aside className="mt-8 mb-4 bg-white rounded-3xl p-4 sm:p-5 border-2 border-stone-200 shadow-sm">
+            <div className="text-center mb-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-full text-xs font-black tracking-wide">
+                <span>🤝</span>
+                <span>OFFICIAL PARTNER</span>
+              </span>
+              <p className="text-xs text-stone-600 font-bold mt-2 leading-relaxed">
+                本アプリおよび越谷ボーイズ・越谷中央ボーイズの挑戦は、<br className="sm:hidden" />
+                青少年の夢を育む地域サポーター企業様のご協力により運営されています。
+              </p>
+            </div>
+
+            {/* スポンサーバナーカード（タップで企業サイトへ） */}
+            <a
+              href={SPC_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group block bg-[#FAF7F5] hover:bg-white rounded-2xl p-3.5 sm:p-4 border border-stone-200 hover:border-blue-500 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-3.5">
+                {/* ロゴ表示エリア：画像読み込み優先＋フォールバック */}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl p-2 shadow-sm border border-stone-200 flex items-center justify-center shrink-0 overflow-hidden">
+                  <img
+                    src={PRIMARY_SPC_LOGO}
+                    onError={(e) => {
+                      if (e.target.src !== FALLBACK_SPC_LOGO) {
+                        e.target.src = FALLBACK_SPC_LOGO;
+                      }
+                    }}
+                    alt="スマイルプラスコンサルティング ロゴ"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+
+                {/* 企業情報テキスト */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[10px] sm:text-xs font-black text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                      オフィシャル協賛
+                    </span>
+                    <span className="text-xs text-stone-400 group-hover:text-blue-600 transition">
+                      公式サイト ↗
+                    </span>
+                  </div>
+                  <h3 className="font-black text-stone-900 text-sm sm:text-base leading-tight group-hover:text-blue-800 transition">
+                    スマイルプラスコンサルティング
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-stone-500 mt-1 leading-snug line-clamp-2">
+                    地域社会と子どもの笑顔をつなぐ。越谷ボーイズ／越谷中央ボーイズの選手たちを温かくサポートしています。
+                  </p>
+                  <p className="text-[10px] text-stone-400 mt-1 font-mono truncate">
+                    smileplusctg.com
+                  </p>
+                </div>
+              </div>
+            </a>
+          </aside>
+
           {/* フッター */}
-          <footer className="mt-8 text-center text-xs sm:text-sm text-stone-500 py-3 space-y-1">
+          <footer className="mt-4 text-center text-xs text-stone-500 py-3 space-y-1">
             <p className="font-bold text-stone-700">
-              越谷ボーイズ 広報サポート ／ 考えるを、ひとりにしない。
+              越谷ボーイズ / 越谷中央ボーイズ 広報サポート ／ 考えるを、ひとりにしない。
             </p>
-            <p className="text-xs">
-              © NPO法人 越谷K・クラブ（越谷ボーイズ）
+            <p className="text-xs text-stone-400">
+              © NPO法人 越谷K・クラブ（越谷ボーイズ・越谷中央ボーイズ）
             </p>
           </footer>
 
