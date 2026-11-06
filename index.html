@@ -12,7 +12,7 @@
   <meta property="og:url" content="https://spc-jp.github.io/koshigaya-boys-sns/">
   <meta property="og:image" content="team-logo.png?v=20261103">
   
-  <!-- GitHubに配置された team-logo.png を最優先 favicon として登録（キャッシュ対策パラメータ付き） -->
+  <!-- GitHubに配置された team-logo.png を最優先 favicon として登録 -->
   <link rel="icon" type="image/png" href="team-logo.png?v=20261103">
   <link rel="shortcut icon" href="team-logo.png?v=20261103">
   <link rel="apple-touch-icon" href="team-logo.png?v=20261103">
@@ -35,12 +35,12 @@
       theme: {
         extend: {
           colors: {
-            brandCrimson: '#9B0709', // チーム基本深紅
-            cardMain: '#BB5758',     // 野球カード用指定カラー
-            cardSub: '#F3E8E1',      // 生成りクリーム
-            cardDark: '#1A1415',     // カード引き締めダーク
-            bgBase: '#FAF7F5',       // 優しい背景色
-            appNavy: '#020562'       // ボーイズネイビーアクセント
+            brandCrimson: '#9B0709',
+            cardMain: '#BB5758',
+            cardSub: '#F3E8E1',
+            cardDark: '#1A1415',
+            bgBase: '#FAF7F5',
+            appNavy: '#020562'
           }
         }
       }
@@ -71,6 +71,50 @@
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* 🌈 ホログラム（キラカード）の特殊エフェクト */
+    .holo-active {
+      position: relative;
+      overflow: hidden;
+    }
+    .holo-sheen {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        115deg,
+        transparent 0%,
+        rgba(255, 0, 150, 0.25) 25%,
+        rgba(0, 255, 255, 0.4) 45%,
+        rgba(255, 255, 0, 0.35) 60%,
+        rgba(0, 255, 128, 0.3) 75%,
+        transparent 100%
+      );
+      background-size: 250% 250%;
+      mix-blend-mode: color-dodge;
+      transition: background-position 0.1s ease-out, opacity 0.3s;
+    }
+    .holo-sparkle {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: 
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 1.5px, transparent 2px),
+        radial-gradient(circle at 80% 40%, rgba(255,255,255,0.9) 2px, transparent 3px),
+        radial-gradient(circle at 40% 70%, rgba(255,255,255,0.7) 1px, transparent 2px),
+        radial-gradient(circle at 70% 85%, rgba(255,255,255,0.9) 2px, transparent 3px);
+      background-size: 120px 120px;
+      mix-blend-mode: overlay;
+      opacity: 0.8;
+    }
+    @keyframes holoAnim {
+      0% { background-position: 0% 0%; }
+      50% { background-position: 100% 100%; }
+      100% { background-position: 0% 0%; }
+    }
+    .holo-auto-sheen {
+      animation: holoAnim 6s ease-in-out infinite;
+    }
   </style>
 </head>
 <body class="min-h-screen pb-36 sm:pb-24">
@@ -79,7 +123,10 @@
   <script type="text/babel">
     const { useState, useRef, useEffect } = React;
 
-    // GitHubに配置されたKB本物エンブレムロゴ
+    // ローカルストレージ自動保存キー
+    const STORAGE_KEY = 'kb_sns_draft_v2';
+
+    // チームKB公式ロゴ画像（GitHubトップの team-logo.png を参照）
     const PRIMARY_TEAM_LOGO = "team-logo.png?v=20261103";
     const SECONDARY_TEAM_LOGO = "favicon.png?v=20261103";
 
@@ -96,70 +143,80 @@
       { id: 'chuo', name: '越谷中央ボーイズ', enName: 'KOSHIGAYA CHUO BOYS' }
     ];
 
-    // 行事マスター（使用頻度順 + スポンサー募集）
+    // ① 天気・グラウンド状況ピッカーの選択肢
+    const WEATHER_OPTIONS = [
+      { id: 'sunny', label: '☀️ 青空・快晴', prefix: '抜けるような青空と心地よい野球日和のもと、' },
+      { id: 'cloudy', label: '☁️ 涼風', prefix: '過ごしやすいグラウンドの涼風が吹き抜けるなか、' },
+      { id: 'hot', label: '🏃‍♂️ 猛暑', prefix: 'グラウンドの熱気にも負けない気迫みなぎる空気のなか、' },
+      { id: 'autumn', label: '🍂 爽やかな秋晴れ', prefix: '爽やかな秋風が駆け抜ける絶好の野球日和のもと、' },
+      { id: 'muddy', label: '👟 泥んこ・粘り', prefix: '泥だらけになりながら全力で白球を追いかけるなか、' }
+    ];
+
+    // ③ 今日の名場面・感情タグピッカーの選択肢
+    const EMOTION_TAGS = [
+      { id: 'run', label: '⚾️ 魂の全力疾走', text: '一塁を駆け抜ける魂の全力疾走' },
+      { id: 'defense', label: '🛡️ 鉄壁のファインプレー', text: '仲間を救う鉄壁のビッグプレー' },
+      { id: 'homerun', label: '🚀 快音・強烈ヒット', text: '快音を響かせた目の覚める強烈な一打' },
+      { id: 'voice', label: '🗣️ ベンチの声出し団結', text: 'ベンチもスタンドも一丸となった大きな声出し' },
+      { id: 'bontji', label: '👟 道具磨き・凡事徹底', text: '脱いだ靴や道具を美しく整える凡事徹底の姿勢' },
+      { id: 'cheer', label: '📣 父母スタンドの熱い応援', text: '父母スタンドからの惜しみない温かい大声援' }
+    ];
+
+    // 行事マスター
     const EVENTS = [
       {
         id: 'tournament',
         title: '🏆 大会・公式戦の試合結果',
         badge: '試合速報',
-        desc: '粘りの好ゲーム・全員野球の熱いドラマと応援への御礼',
-        isSpecial: false
+        desc: '粘りの好ゲーム・全員野球の熱いドラマと応援への御礼'
       },
       {
         id: 'player',
         title: '🌟 今週のキラリ選手紹介',
         badge: '一番人気！',
-        desc: '写真1枚でプロ野球カード画像＆紹介文を同時に作成できます',
-        isSpecial: true
+        desc: '写真1枚でプロ野球カード画像＆紹介文を同時に作成できます'
       },
       {
         id: 'practice',
         title: '👟 普段の練習風景（凡事徹底）',
         badge: 'チーム方針',
-        desc: '大きな挨拶・道具磨き・全力疾走・高校へつなぐ基礎指導',
-        isSpecial: false
+        desc: '大きな挨拶・道具磨き・全力疾走・高校へつなぐ基礎指導'
       },
       {
         id: 'experience',
         title: '⚾️ 体験練習会・見学のご案内',
         badge: '新入団・小6向け',
-        desc: '手ぶらOK・道具貸出あり・温かく迎える安心メッセージ',
-        isSpecial: false
+        desc: '手ぶらOK・道具貸出あり・温かく迎える安心メッセージ'
       },
       {
         id: 'welcome_team',
         title: '🤝 学童チーム歓迎・体験の御礼',
         badge: '地域との絆',
-        desc: '見学に来てくれた少年野球チームへの温かい感謝メッセージ',
-        isSpecial: false
+        desc: '見学に来てくれた少年野球チームへの温かい感謝メッセージ'
       },
       {
         id: 'daily_schedule',
         title: '⏰ ある週末の1日（スケジュール）',
         badge: '父母さん安心',
-        desc: '土日の時間割やお茶当番の負担軽減を伝えて不安を解消',
-        isSpecial: false
+        desc: '土日の時間割やお茶当番の負担軽減を伝えて不安を解消'
       },
       {
         id: 'summer_camp',
         title: '☀️ 夏季強化合宿のご報告',
         badge: '絆・成長',
-        desc: '早朝練習から夜のミーティング・仲間と乗り越えた団結力',
-        isSpecial: false
+        desc: '早朝練習から夜のミーティング・仲間と乗り越えた団結力'
       },
       {
         id: 'parents',
         title: '👨‍👩‍👦 父母会・サポート体制',
         badge: '協力体制',
-        desc: '無理のない当番体制・指導者との連携・温かい応援の様子',
-        isSpecial: false
+        desc: '無理のない当番体制・指導者との連携・温かい応援の様子'
       },
       {
         id: 'sponsor',
         title: '🤝 オフィシャルスポンサー募集',
         badge: '創部30期・地域応援',
-        desc: '30期・3,600名の絆とともに青少年の健全育成を支える企業・サポーター募集',
-        isSpecial: false
+        desc: '30期・3,600名の絆とともに青少年の健全育成を支える企業・サポーター募集'
       }
     ];
 
@@ -187,8 +244,14 @@
       const [copiedKey, setCopiedKey] = useState('');
       const [showPostCopyModal, setShowPostCopyModal] = useState(false);
 
+      // ① 天気・情景ステート
+      const [weatherId, setWeatherId] = useState('sunny');
+
+      // ③ 名場面・感情タグステート（複数選択可能）
+      const [selectedTags, setSelectedTags] = useState(['run', 'voice']);
+
       // 選手カード専用ステート
-      const [cardTheme, setCardTheme] = useState('gold');
+      const [cardTheme, setCardTheme] = useState('holo'); // デフォルトを虹色ホログラムに
       const [number, setNumber] = useState('10');
       const [nameJa, setNameJa] = useState('佐藤 颯太');
       const [nameEn, setNameEn] = useState('SOUTA SATO');
@@ -198,10 +261,15 @@
       const [originTeam, setOriginTeam] = useState('越谷ライオンズ出身');
       const [playerMessage, setPlayerMessage] = useState('僕も小6の秋は硬式球にドキドキしたけど、先輩たちが優しく教えてくれてすぐ慣れました！まずは気軽にキャッチボールしに来てください！');
       
-      // 画像アップロード & Canvas
+      // ④ 写真の位置・サイズ調整スライダーステート
+      const [imgScale, setImgScale] = useState(100); // 80% 〜 180%
+      const [imgOffsetY, setImgOffsetY] = useState(0); // -150px 〜 +150px
       const [uploadedImgUrl, setUploadedImgUrl] = useState(null);
       const [isCardSaving, setIsCardSaving] = useState(false);
       const canvasRef = useRef(null);
+
+      // 🌈 ホログラム傾きジャイロ・マウス追従ステート
+      const [holoPos, setHoloPos] = useState({ x: 50, y: 50 });
 
       // 公式戦・試合結果 専用ステート
       const [tournamentName, setTournamentName] = useState('第〇回 日本少年野球 支部予選');
@@ -219,6 +287,92 @@
         setToastMsg(msg);
         setTimeout(() => setToastMsg(''), 2500);
       };
+
+      // スマホ傾き（ジャイロ）イベント検知
+      useEffect(() => {
+        const handleOrientation = (e) => {
+          if (cardTheme !== 'holo') return;
+          const gamma = e.gamma || 0; // -90 〜 +90 (左右傾き)
+          const beta = e.beta || 0;   // -180 〜 +180 (前後傾き)
+          const posX = Math.min(100, Math.max(0, ((gamma + 30) / 60) * 100));
+          const posY = Math.min(100, Math.max(0, ((beta - 20) / 60) * 100));
+          setHoloPos({ x: posX, y: posY });
+        };
+
+        if (window.DeviceOrientationEvent) {
+          window.addEventListener('deviceorientation', handleOrientation, true);
+        }
+        return () => {
+          if (window.DeviceOrientationEvent) {
+            window.removeEventListener('deviceorientation', handleOrientation, true);
+          }
+        };
+      }, [cardTheme]);
+
+      // 指やマウスのドラッグ・移動でホログラム光彩を操作
+      const handleCardMove = (e) => {
+        if (cardTheme !== 'holo') return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const x = ((clientX - rect.left) / rect.width) * 100;
+        const y = ((clientY - rect.top) / rect.height) * 100;
+        setHoloPos({ x, y });
+      };
+
+      // ② 下書き自動復元
+      useEffect(() => {
+        try {
+          const savedDraft = localStorage.getItem(STORAGE_KEY);
+          if (savedDraft) {
+            const data = JSON.parse(savedDraft);
+            if (data.teamKey) setTeamKey(data.teamKey);
+            if (data.eventId) setEventId(data.eventId);
+            if (data.format) setFormat(data.format);
+            if (data.purpose) setPurpose(data.purpose);
+            if (data.weatherId) setWeatherId(data.weatherId);
+            if (data.selectedTags) setSelectedTags(data.selectedTags);
+            if (data.cardTheme) setCardTheme(data.cardTheme);
+            if (data.number) setNumber(data.number);
+            if (data.nameJa) setNameJa(data.nameJa);
+            if (data.nameEn) setNameEn(data.nameEn);
+            if (data.position) setPosition(data.position);
+            if (data.handedness) setHandedness(data.handedness);
+            if (data.grade) setGrade(data.grade);
+            if (data.originTeam) setOriginTeam(data.originTeam);
+            if (data.playerMessage) setPlayerMessage(data.playerMessage);
+            if (data.tournamentName) setTournamentName(data.tournamentName);
+            if (data.stadiumName) setStadiumName(data.stadiumName);
+            if (data.opponentName) setOpponentName(data.opponentName);
+            if (data.myScore) setMyScore(data.myScore);
+            if (data.opponentScore) setOpponentScore(data.opponentScore);
+            if (data.matchMood) setMatchMood(data.matchMood);
+            if (data.matchHighlight) setMatchHighlight(data.matchHighlight);
+            if (data.imgScale) setImgScale(data.imgScale);
+            if (data.imgOffsetY) setImgOffsetY(data.imgOffsetY);
+          }
+        } catch (e) {
+          console.error("Failed to load draft:", e);
+        }
+      }, []);
+
+      // ② 下書き自動保存
+      useEffect(() => {
+        try {
+          const draft = {
+            teamKey, eventId, format, purpose, weatherId, selectedTags, cardTheme,
+            number, nameJa, nameEn, position, handedness, grade, originTeam, playerMessage,
+            tournamentName, stadiumName, opponentName, myScore, opponentScore, matchMood, matchHighlight,
+            imgScale, imgOffsetY
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+        } catch (e) {}
+      }, [
+        teamKey, eventId, format, purpose, weatherId, selectedTags, cardTheme,
+        number, nameJa, nameEn, position, handedness, grade, originTeam, playerMessage,
+        tournamentName, stadiumName, opponentName, myScore, opponentScore, matchMood, matchHighlight,
+        imgScale, imgOffsetY
+      ]);
 
       // 初回ダミー背景生成
       useEffect(() => {
@@ -249,12 +403,12 @@
         ctx.fillText('打撃・投球・ベンチの笑顔など', 300, 395);
         ctx.font = '18px "Noto Sans JP", sans-serif';
         ctx.fillStyle = 'rgba(243, 232, 225, 0.9)';
-        ctx.fillText('スマホで撮った縦向き写真がキレイに収まります', 300, 435);
+        ctx.fillText('下のスライダーで拡大や上下位置も合わせられます', 300, 435);
 
         setUploadedImgUrl(dummyCanvas.toDataURL());
       }, []);
 
-      // Canvasカード描画（GitHubアップロード画像 team-logo.png を直接読み込み）
+      // ④ Canvasカード描画
       const renderCard = () => {
         if (!uploadedImgUrl) return;
         const canvas = canvasRef.current;
@@ -271,6 +425,16 @@
           canvas.height = H;
 
           const THEME_COLORS = {
+            holo: {
+              main: '#1A0E2E',
+              accent: '#E5C158',
+              badgeBg: '#FFE600',
+              badgeText: '#1A0E2E',
+              subText: '#00F0FF',
+              darkBand: 'rgba(15, 8, 30, 0.94)',
+              titleBadge: '★ ULTRA RARE HOLOGRAM ★',
+              isHolo: true
+            },
             gold: {
               main: '#9B0709',
               accent: '#E5C158',
@@ -300,14 +464,48 @@
             }
           };
 
-          const theme = THEME_COLORS[cardTheme] || THEME_COLORS.gold;
+          const theme = THEME_COLORS[cardTheme] || THEME_COLORS.holo;
 
-          const hRatio = W / img.width;
-          const vRatio = H / img.height;
-          const ratio = Math.max(hRatio, vRatio);
-          const shiftX = (W - img.width * ratio) / 2;
-          const shiftY = (H - img.height * ratio) / 2;
-          ctx.drawImage(img, 0, 0, img.width, img.height, shiftX, shiftY, img.width * ratio, img.height * ratio);
+          // 背景クリア
+          ctx.fillStyle = '#1A1415';
+          ctx.fillRect(0, 0, W, H);
+
+          const baseRatio = Math.max(W / img.width, H / img.height);
+          const zoomFactor = (imgScale || 100) / 100;
+          const currentRatio = baseRatio * zoomFactor;
+
+          const drawWidth = img.width * currentRatio;
+          const drawHeight = img.height * currentRatio;
+
+          const shiftX = (W - drawWidth) / 2;
+          const shiftY = ((H - drawHeight) / 2) + (imgOffsetY || 0);
+
+          ctx.drawImage(img, 0, 0, img.width, img.height, shiftX, shiftY, drawWidth, drawHeight);
+
+          if (theme.isHolo) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'color-dodge';
+            const holoGrad = ctx.createLinearGradient(0, 0, W, H);
+            holoGrad.addColorStop(0, 'rgba(255, 0, 128, 0.15)');
+            holoGrad.addColorStop(0.25, 'rgba(0, 255, 255, 0.25)');
+            holoGrad.addColorStop(0.5, 'rgba(255, 255, 0, 0.2)');
+            holoGrad.addColorStop(0.75, 'rgba(0, 255, 128, 0.22)');
+            holoGrad.addColorStop(1, 'rgba(255, 0, 200, 0.18)');
+            ctx.fillStyle = holoGrad;
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            const stars = [
+              {x: 80, y: 150, r: 2}, {x: 480, y: 220, r: 3}, {x: 520, y: 450, r: 2.5},
+              {x: 120, y: 550, r: 2}, {x: 450, y: 700, r: 3.5}, {x: 260, y: 280, r: 1.8}
+            ];
+            stars.forEach(st => {
+              ctx.beginPath();
+              ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+              ctx.fill();
+            });
+            ctx.restore();
+          }
 
           // 左上トライアングル
           ctx.save();
@@ -353,7 +551,6 @@
           ctx.stroke();
           ctx.clip();
 
-          // 本物のチームロゴ画像を読み込んで配置
           const teamLogoImg = new Image();
           teamLogoImg.crossOrigin = "anonymous";
           teamLogoImg.src = PRIMARY_TEAM_LOGO;
@@ -470,20 +667,40 @@
         if (document.fonts) {
           document.fonts.ready.then(() => renderCard());
         }
-      }, [uploadedImgUrl, number, nameEn, nameJa, position, handedness, grade, originTeam, cardTheme, eventId, teamKey]);
+      }, [uploadedImgUrl, number, nameEn, nameJa, position, handedness, grade, originTeam, cardTheme, eventId, teamKey, imgScale, imgOffsetY]);
 
-      // 行事・チーム切り替え時の下書き生成
+      const toggleEmotionTag = (tagId) => {
+        if (selectedTags.includes(tagId)) {
+          setSelectedTags(selectedTags.filter(id => id !== tagId));
+        } else {
+          setSelectedTags([...selectedTags, tagId]);
+        }
+      };
+
       useEffect(() => {
         const isFb = format === 'facebook';
+        const weatherObj = WEATHER_OPTIONS.find(w => w.id === weatherId) || WEATHER_OPTIONS[0];
+        const weatherIntro = weatherObj.prefix;
+
+        const activeTagTexts = selectedTags
+          .map(tId => {
+            const hit = EMOTION_TAGS.find(t => t.id === tId);
+            return hit ? hit.text : '';
+          })
+          .filter(Boolean);
+        const tagPhrase = activeTagTexts.length > 0
+          ? `「${activeTagTexts.join('」「')}」が随所に光り、`
+          : '';
 
         if (eventId === 'player') {
+          const rareTag = cardTheme === 'holo' ? '【✨限定ホログラム・レアカード公開中！】' : '';
           if (isFb) {
             setCustomMemo(
-`【今週のキラリ選手紹介：背番号${number || '00'} ${nameJa || '選手'}】\n\n${teamName}で日々成長を続ける選手をご紹介します。\n\n■ 選手名：${nameJa}（${nameEn}）\n■ 所属：${teamName}（NPO法人 越谷K・クラブ）\n■ 学年・守備位置：${grade} / ${position}（${handedness}）\n■ 出身学童野球チーム：${originTeam}\n\n【後輩・小学生へのメッセージ】\n「${playerMessage}」\n\n地道な基礎練習（凡事徹底）と道具を大切にする姿勢で、チームを力強く引っ張ってくれています。今後のさらなる飛躍にご期待ください！\n\n⚾️ まずは一度、グラウンドへ！見学・体験練習はお気軽にどうぞ。\n🔗 お申込みはこちら：${ENTRY_URL}`
+`【今週のキラリ選手紹介：背番号${number || '00'} ${nameJa || '選手'}】\n${rareTag}\n\n${weatherIntro}${teamName}で日々真摯に成長を続ける選手をご紹介します。\n\n■ 選手名：${nameJa}（${nameEn}）\n■ 所属：${teamName}（NPO法人 越谷K・クラブ）\n■ 学年・守備位置：${grade} / ${position}（${handedness}）\n■ 出身学童野球チーム：${originTeam}\n\n【後輩・小学生へのメッセージ】\n「${playerMessage}」\n\n${tagPhrase}地道な基礎練習（凡事徹底）と道具を大切にする姿勢で、チームを力強く牽引してくれています。今後のさらなる飛躍にご期待ください！\n\n⚾️ まずは一度、グラウンドへ！見学・体験練習はお気軽にどうぞ。\n🔗 お申込みはこちら：${ENTRY_URL}`
             );
           } else {
             setCustomMemo(
-`🌟【今週のキラリ選手紹介！】⚾️✨\n${teamName}の仲間を紹介します！\n\n📸 1枚目の限定選手カードもぜひ見てね！\n━━━━━━━━━━━━━━━\n■ チーム：${teamName}\n■ 背番号：#${number || '00'}\n■ 選手名：${nameJa} 選手（${nameEn}）\n■ 学年・ポジション：${grade} / ${position}（${handedness}）\n■ 出身学童チーム：★${originTeam}★\n━━━━━━━━━━━━━━━\n\n🗣 選手から小学生の後輩たちへ一言！\n「${playerMessage}」\n\nグラウンドでの元気な声と、道具をピカピカに磨く姿が光っています👟✨\n先輩の背中を追って、まずは一度、グラウンドへ遊びに来てくださいね！🙌`
+`🌟【今週のキラリ選手紹介！】⚾️✨\n${cardTheme === 'holo' ? '🌈 大注目の限定キラカード（ホログラム）登場！\n' : ''}${weatherIntro}${teamName}の仲間を紹介します！\n\n📸 1枚目の限定選手カードもぜひ見てね！\n━━━━━━━━━━━━━━━\n■ チーム：${teamName}\n■ 背番号：#${number || '00'}\n■ 選手名：${nameJa} 選手（${nameEn}）\n■ 学年・ポジション：${grade} / ${position}（${handedness}）\n■ 出身学童チーム：★${originTeam}★\n━━━━━━━━━━━━━━━\n\n🗣 選手から小学生の後輩たちへ一言！\n「${playerMessage}」\n\n${tagPhrase}グラウンドでの元気な声と、道具をピカピカに磨く姿が光っています👟✨\n先輩の背中を追って、まずは一度、グラウンドへ遊びに来てくださいね！🙌`
             );
           }
         } else if (eventId === 'tournament') {
@@ -499,62 +716,62 @@
 
           if (matchMood === 'win') {
             moodTitleInsta = `🏆【公式戦勝利！】${teamName} 粘りの全員野球で掴んだ白星！⚾️🔥`;
-            moodBodyInsta = `序盤から息詰まる攻防となりましたが、最後までベンチもスタンドも声を掛け合い、見事勝利を掴み取りました！✨\n${matchHighlight ? `\n🔥 本日のハイライト：\n「${matchHighlight}」\n` : ''}\n一戦ごとに頼もしく成長していく選手たちへ、次戦も熱い応援をよろしくお願いいたします！`;
-            moodBodyFb = `緊迫した展開のなか、選手たちは日頃の練習の成果を発揮し、粘り強い全員野球で勝利を収めました。\n${matchHighlight ? `本日のハイライト：「${matchHighlight}」\n` : ''}次戦に向けて気を引き締め、さらなるチーム力の向上に励んでまいります。`;
+            moodBodyInsta = `${weatherIntro}序盤から息詰まる攻防となりましたが、${tagPhrase}最後までベンチもスタンドも声を掛け合い、見事勝利を掴み取りました！✨\n${matchHighlight ? `\n🔥 本日のハイライト：\n「${matchHighlight}」\n` : ''}\n一戦ごとに頼もしく成長していく選手たちへ、次戦も熱い応援をよろしくお願いいたします！`;
+            moodBodyFb = `${weatherIntro}緊迫した展開のなか、${tagPhrase}選手たちは日頃の練習の成果を発揮し、粘り強い全員野球で勝利を収めました。\n${matchHighlight ? `本日のハイライト：「${matchHighlight}」\n` : ''}次戦に向けて気を引き締め、さらなるチーム力の向上に励んでまいります。`;
           } else if (matchMood === 'lose') {
             moodTitleInsta = `🔥【公式戦結果】最後まで戦い抜いた熱戦！次への糧に⚾️`;
-            moodBodyInsta = `最後まで諦めず、泥だらけになりながら白球を追い続けました！\n結果は惜敗となりましたが、随所に光るプレーと大きな成長が見られた好ゲームでした。${matchHighlight ? `\n\n💬 今日のナイスプレー：\n「${matchHighlight}」\n` : ''}\nこの悔しさを必ず次の成長へ繋げます。最後まで温かい拍手をありがとうございました！`;
-            moodBodyFb = `最後まで全員で声を掛け合い全力を尽くしましたが、惜しくも一歩及ばず敗戦となりました。\n${matchHighlight ? `試合のポイント：「${matchHighlight}」\n` : ''}この経験から得た課題を真摯に受け止め、次の勝利へ向けて日々の練習（凡事徹底）に励んでまいります。`;
+            moodBodyInsta = `${weatherIntro}最後まで諦めず、泥だらけになりながら白球を追い続けました！\n結果は惜敗となりましたが、${tagPhrase}随所に光るプレーと大きな成長が見られた好ゲームでした。${matchHighlight ? `\n\n💬 今日のナイスプレー：\n「${matchHighlight}」\n` : ''}\nこの悔しさを必ず次の成長へ繋げます。最後まで温かい拍手をありがとうございました！`;
+            moodBodyFb = `${weatherIntro}最後まで全員で声を掛け合い全力を尽くしましたが、惜しくも一歩及ばず敗戦となりました。\n${tagPhrase}${matchHighlight ? `試合のポイント：「${matchHighlight}」\n` : ''}この経験から得た課題を真摯に受け止め、次の勝利へ向けて日々の練習（凡事徹底）に励んでまいります。`;
           } else {
             moodTitleInsta = `⚾️【公式戦結果】全員野球で挑んだ白熱の好ゲーム！✨`;
-            moodBodyInsta = `互いに譲らない緊迫した攻防が続きました！\n選手たちはグラウンド・ベンチが一丸となって最後まで全力疾走・全力プレーを貫きました。${matchHighlight ? `\n\n✨ 印象的なワンシーン：\n「${matchHighlight}」\n` : ''}\n朝早くから会場で熱い声援を送ってくださった皆様、本当にありがとうございました！`;
-            moodBodyFb = `互いの意地がぶつかり合う白熱した好ゲームとなりました。選手たちは最後まで集中力を切らさず、チーム一丸となって戦い抜きました。\n${matchHighlight ? `印象的なシーン：「${matchHighlight}」\n` : ''}引き続き温かいご支援をよろしくお願い申し上げます。`;
+            moodBodyInsta = `${weatherIntro}互いに譲らない緊迫した攻防が続きました！\n${tagPhrase}選手たちはグラウンド・ベンチが一丸となって最後まで全力疾走・全力プレーを貫きました。${matchHighlight ? `\n\n✨ 印象的なワンシーン：\n「${matchHighlight}」\n` : ''}\n朝早くから会場で熱い声援を送ってくださった皆様、本当にありがとうございました！`;
+            moodBodyFb = `${weatherIntro}互いの意地がぶつかり合う白熱した好ゲームとなりました。${tagPhrase}選手たちは最後まで集中力を切らさず、チーム一丸となって戦い抜きました。\n${matchHighlight ? `印象的なシーン：「${matchHighlight}」\n` : ''}引き続き温かいご支援をよろしくお願い申し上げます。`;
           }
 
           if (isFb) {
             setCustomMemo(
-`【公式戦 試合結果のご報告】\n\n本日行われました公式戦の試合結果をご報告いたします。\n\n━━━━━━━━━━━━━━━━━\n■ 大会名：${tName}\n■ 試合会場：${stadiumName || '公式球場'}\n■ 対戦カード：${teamName} vs ${opp}\n■ 試合結果：${teamName} ${sMyTeam} - ${sOpp} ${opp}\n━━━━━━━━━━━━━━━━━\n\n${moodBodyFb}\n\n対戦いただいた${opp}の皆様、ならびに大会関係者・審判員の皆様に深く御礼申し上げます。`
+`【公式戦 試合結果のご報告】\n\n${weatherIntro}本日行われました公式戦の試合結果をご報告いたします。\n\n━━━━━━━━━━━━━━━━━\n■ 大会名：${tName}\n■ 試合会場：${stadiumName || '公式球場'}\n■ 対戦カード：${teamName} vs ${opp}\n■ 試合結果：${teamName} ${sMyTeam} - ${sOpp} ${opp}\n━━━━━━━━━━━━━━━━━\n\n${moodBodyFb}\n\n対戦いただいた${opp}の皆様、ならびに大会関係者・審判員の皆様に深く御礼申し上げます。`
             );
           } else {
             setCustomMemo(
-`${moodTitleInsta}\n本日行われた公式戦の結果をお知らせします！\n\n━━━━━━━━━━━━━━━\n■ 大会：${tName}\n■ スコア：${teamName} ${sMyTeam} - ${sOpp} ${opp} ${stadium}\n━━━━━━━━━━━━━━━\n\n${moodBodyInsta}\n\n対戦いただいた${opp}の皆様、大会運営関係者の皆様、ありがとうございました！🙌`
+`${moodTitleInsta}\n${weatherIntro}本日行われた公式戦の結果をお知らせします！\n\n━━━━━━━━━━━━━━━\n■ 大会：${tName}\n■ スコア：${teamName} ${sMyTeam} - ${sOpp} ${opp} ${stadium}\n━━━━━━━━━━━━━━━\n\n${moodBodyInsta}\n\n対戦いただいた${opp}の皆様、大会運営関係者の皆様、ありがとうございました！🙌`
             );
           }
         } else if (eventId === 'experience') {
           setCustomMemo(
             isFb
-              ? `【小学生・保護者の皆様へ：体験練習会のご案内】\n\n${teamName}（NPO法人 越谷K・クラブ）では、新入団員（新中1・現小6）向けの体験練習会・見学会を随時開催しております。\n\n高校野球へつながる確かな基礎指導はもちろん、挨拶や道具の整理整頓といった「凡事徹底」の人間育成を何よりも大切にしています。\n「硬式野球へのステップアップを肌で感じてみたい」「チームの温かい雰囲気を確かめたい」など、どうぞお気軽にご参加ください。\n\n⚾️ まずは一度、グラウンドへ！\n詳細・お申込み専用ページはこちらです：\n🔗 ${ENTRY_URL}\n\nスタッフ・在団生一同、心よりお待ちしております。`
-              : `⚾️【体験練習会 開催のおしらせ】✨\n中学野球の準備、${teamName}でスタートしませんか？\n\n「硬式球って怖くないかな？」「部活とクラブチーム、どっちがいい？」\nそんな不安や疑問をお持ちの小学6年生・保護者の皆様、\nまずは一度、グラウンドへ！${teamName}のグラウンドへお越しください⚾️✨\n\n見学のみ・午前中だけの参加も大歓迎。グローブ貸出ありますので手ぶらでもOKです👌 先輩選手や指導陣が笑顔で温かく迎えます！\n\n👇 日程確認・Web申込みはこちらから！\n🔗 ${ENTRY_URL}`
+              ? `【小学生・保護者の皆様へ：体験練習会のご案内】\n\n${weatherIntro}${teamName}（NPO法人 越谷K・クラブ）では、新入団員（新中1・現小6）向けの体験練習会・見学会を随時開催しております。\n\n高校野球へつながる確かな基礎指導はもちろん、挨拶や道具の整理整頓といった「凡事徹底」の人間育成を何よりも大切にしています。\n${tagPhrase}「硬式野球へのステップアップを肌で感じてみたい」「チームの温かい雰囲気を確かめたい」など、どうぞお気軽にご参加ください。\n\n⚾️ まずは一度、グラウンドへ！\n詳細・お申込み専用ページはこちらです：\n🔗 ${ENTRY_URL}\n\nスタッフ・在団生一同、心よりお待ちしております。`
+              : `⚾️【体験練習会 開催のおしらせ】✨\n${weatherIntro}中学野球の準備、${teamName}でスタートしませんか？\n\n「硬式球って怖くないかな？」「部活とクラブチーム、どっちがいい？」\nそんな不安や疑問をお持ちの小学6年生・保護者の皆様、\nまずは一度、グラウンドへ！${teamName}のグラウンドへお越しください⚾️✨\n\n${tagPhrase}見学のみ・午前中だけの参加も大歓迎。グローブ貸出ありますので手ぶらでもOKです👌 先輩選手や指導陣が笑顔で温かく迎えます！\n\n👇 日程確認・Web申込みはこちらから！\n🔗 ${ENTRY_URL}`
           );
         } else if (eventId === 'welcome_team') {
           setCustomMemo(
             isFb
-              ? `【学童野球チームの皆様へ：体験見学の御礼】\n\n本日は、〇〇少年野球チームの皆様が${teamName}の体験練習へご参加くださいました。\n\n白球をひたむきに追う元気いっぱいのプレーと明るい笑顔に、当チームの選手・指導陣一同、大きな刺激と元気をいただきました。\n今後とも地域の学童野球チームの皆様との温かい交流を深め、子どもたちの健全な野球環境づくりに貢献してまいります。ご引率いただいた指導者・保護者の皆様に心より御礼申し上げます。\n\n⚾️ まずは一度、グラウンドへ！個別見学・体験はいつでも歓迎です。\n🔗 ${ENTRY_URL}`
-              : `🤝【〇〇少年野球の皆さん、来てくれてありがとう！】⚾️✨\n本日の練習に、地域の学童野球チームの選手たちが体験に来てくれました！\n\n最初は緊張していた小学生も、先輩たちと一緒にノックを受けるうちに笑顔いっぱいに😆\n「楽しかった！」「また来たい！」という言葉に、${teamName}の選手たちも大喜びでした！\n\n「まずは一度、グラウンドへ！」いつでも遊びに来てくださいね！🙌\n🔗 体験詳細・日程はこちら：${ENTRY_URL}`
+              ? `【学童野球チームの皆様へ：体験見学の御礼】\n\n${weatherIntro}本日は、〇〇少年野球チームの皆様が${teamName}の体験練習へご参加くださいました。\n\n${tagPhrase}白球をひたむきに追う元気いっぱいのプレーと明るい笑顔に、当チームの選手・指導陣一同、大きな刺激と元気をいただきました。\n今後とも地域の学童野球チームの皆様との温かい交流を深め、子どもたちの健全な野球環境づくりに貢献してまいります。ご引率いただいた指導者・保護者の皆様に心より御礼申し上げます。\n\n⚾️ まずは一度、グラウンドへ！個別見学・体験はいつでも歓迎です。\n🔗 ${ENTRY_URL}`
+              : `🤝【〇〇少年野球の皆さん、来てくれてありがとう！】⚾️✨\n${weatherIntro}本日の練習に、地域の学童野球チームの選手たちが体験に来てくれました！\n\n最初は緊張していた小学生も、先輩たちと一緒にノックを受けるうちに笑顔いっぱいに😆\n${tagPhrase}「楽しかった！」「また来たい！」という言葉に、${teamName}の選手たちも大喜びでした！\n\n「まずは一度、グラウンドへ！」いつでも遊びに来てくださいね！🙌\n🔗 体験詳細・日程はこちら：${ENTRY_URL}`
           );
         } else if (eventId === 'daily_schedule') {
           setCustomMemo(
             isFb
-              ? `【${teamName}の週末スケジュールとサポート環境】\n\n中学硬式野球をご検討中の保護者様より多く寄せられる「土日の拘束時間や当番」に関する活動の様子をご紹介いたします。\n\n■ 週末の標準スケジュール\n・8:30 集合・元気な挨拶（凡事徹底）\n・9:00 体幹ウォーミングアップ・怪我予防の基礎反復\n・12:00 昼食・休憩（仲間との楽しい時間）\n・13:00 実戦形式・シートノック\n・16:30 グラウンド整備・道具手入れ・解散\n\n当チームでは家庭や学業とのバランスを重視し、保護者のお茶当番負担の軽減を推進しています。無理のない協力体制で選手たちを温かく支えています。\n\n⚾️ まずは一度、グラウンドへ！チームの雰囲気を確かめてみませんか？\n🔗 見学・体験お申込み：${ENTRY_URL}`
-              : `⏰【${teamName}のある週末の1日】⚾️✨\n「中学の硬式チームって、土日はどんなスケジュール？」\nそんな疑問にお答えします！\n\n☀️ 8:30 集合・挨拶（凡事徹底！）\n⚾️ 9:00 ウォーミングアップ・怪我を防ぐ基礎練習\n🍙 12:00 お昼ごはん（みんなで楽しく♪）\n🔥 13:00 実戦・バッティング練習\n✨ 16:30 グラウンド整備・道具を磨いて解散！\n\n保護者のお茶当番負担も軽減を進めており、無理なく笑顔で応援できる環境です😊\nまずは一度、グラウンドへ！見学会でお待ちしています！\n🔗 ${ENTRY_URL}`
+              ? `【${teamName}の週末スケジュールとサポート環境】\n\n${weatherIntro}中学硬式野球をご検討中の保護者様より多く寄せられる「土日の拘束時間や当番」に関する活動の様子をご紹介いたします。\n\n■ 週末の標準スケジュール\n・8:30 集合・元気な挨拶（凡事徹底）\n・9:00 体幹ウォーミングアップ・怪我予防の基礎反復\n・12:00 昼食・休憩（仲間との楽しい時間）\n・13:00 実戦形式・シートノック\n・16:30 グラウンド整備・道具手入れ・解散\n\n当チームでは家庭や学業とのバランスを重視し、保護者のお茶当番負担の軽減を推進しています。${tagPhrase}無理のない協力体制で選手たちを温かく支えています。\n\n⚾️ まずは一度、グラウンドへ！チームの雰囲気を確かめてみませんか？\n🔗 見学・体験お申込み：${ENTRY_URL}`
+              : `⏰【${teamName}のある週末の1日】⚾️✨\n${weatherIntro}「中学の硬式チームって、土日はどんなスケジュール？」\nそんな疑問にお答えします！\n\n☀️ 8:30 集合・挨拶（凡事徹底！）\n⚾️ 9:00 ウォーミングアップ・怪我を防ぐ基礎練習\n🍙 12:00 お昼ごはん（みんなで楽しく♪）\n🔥 13:00 実戦・バッティング練習\n✨ 16:30 グラウンド整備・道具を磨いて解散！\n\n${tagPhrase}保護者のお茶当番負担も軽減を進めており、無理なく笑顔で応援できる環境です😊\nまずは一度、グラウンドへ！見学会でお待ちしています！\n🔗 ${ENTRY_URL}`
           );
         } else if (eventId === 'practice') {
           setCustomMemo(
             isFb
-              ? `【普段の練習風景より：『凡事徹底』の精神】\n\n${teamName}（NPO法人 越谷K・クラブ）では、週末の練習において「当たり前のことを、人並み外れて徹底して行う（凡事徹底）」を指導方針の柱に据えています。\n\n挨拶、靴や道具の整頓、グラウンド整備への真摯な姿勢。高校野球、そして社会に出ても通用する人間力を育てることこそが私たちの使命です。選手たちは泥だらけになりながら、確かな一歩を積み重ねております。\n\n⚾️ まずは一度、グラウンドへ！見学・体験は随時受付中です。\n🔗 ${ENTRY_URL}`
-              : `⚾️【日々の積み重ねが未来をつくる】✨\n${teamName}のグラウンドでは、今日も元気な挨拶と全力疾走が響いています！\n\n「ボールを大切にする」「ベンチの荷物を美しく整える」\n技術の上達と同じくらい、道具や仲間へのリスペクトを日常から徹底しています👟🎒\n当たり前の徹底が、ピンチの時に一歩前へ踏み出す勇気になります！今週末も全員野球で顔晴ります！💪\n\n⚾️ まずは一度、グラウンドへ！体験受付中：${ENTRY_URL}`
+              ? `【普段の練習風景より：『凡事徹底』の精神】\n\n${weatherIntro}${teamName}（NPO法人 越谷K・クラブ）では、週末の練習において「当たり前のことを、人並み外れて徹底して行う（凡事徹底）」を指導方針の柱に据えています。\n\n挨拶、靴や道具の整頓、グラウンド整備への真摯な姿勢。高校野球、そして社会に出ても通用する人間力を育てることこそが私たちの使命です。${tagPhrase}選手たちは泥だらけになりながら、確かな一歩を積み重ねております。\n\n⚾️ まずは一度、グラウンドへ！見学・体験は随時受付中です。\n🔗 ${ENTRY_URL}`
+              : `⚾️【日々の積み重ねが未来をつくる】✨\n${weatherIntro}${teamName}のグラウンドでは、今日も元気な挨拶と全力疾走が響いています！\n\n「ボールを大切にする」「ベンチの荷物を美しく整える」\n技術の上達と同じくらい、道具や仲間へのリスペクトを日常から徹底しています👟🎒\n${tagPhrase}当たり前の徹底が、ピンチの時に一歩前へ踏み出す勇気になります！今週末も全員野球で顔晴ります！💪\n\n⚾️ まずは一度、グラウンドへ！体験受付中：${ENTRY_URL}`
           );
         } else if (eventId === 'summer_camp') {
           setCustomMemo(
             isFb
-              ? `【夏季強化合宿 終了のご報告】\n\n${teamName}夏季強化合宿が無事全日程を終了いたしました。本合宿では「自立と協調」をテーマに掲げ、技術反復のみならず共同生活を通じた自己管理・感謝の心を養いました。\n選手たちは厳しいメニューを全員の気迫で乗り越え、チームとして確固たる結束力を確立いたしました。手厚い体調管理・食事サポートを担っていただいた保護者の皆様に心より厚く御礼申し上げます。\n\n⚾️ まずは一度、グラウンドへ！秋の体験練習受付中：${ENTRY_URL}`
-              : `☀️【夏合宿！全員で乗り越えた絆の夏】🔥\n猛暑に負けず、夏季強化合宿を無事に走り切りました！⚾️\n\n朝のランニングから日が暮れるまでの徹底ノック、夜のミーティングやみんなで囲む大盛りごはん🍚✨\n苦しい時こそ仲間同士で声を掛け合い、限界をひとつ突破した選手たちの表情はたくましさそのものです！秋の大会へ弾みをつけます！💪\n\n⚾️ まずは一度、グラウンドへ！体験詳細はこちら：${ENTRY_URL}`
+              ? `【夏季強化合宿 終了のご報告】\n\n${weatherIntro}${teamName}夏季強化合宿が無事全日程を終了いたしました。本合宿では「自立と協調」をテーマに掲げ、技術反復のみならず共同生活を通じた自己管理・感謝の心を養いました。\n${tagPhrase}選手たちは厳しいメニューを全員の気迫で乗り越え、チームとして確固たる結束力を確立いたしました。手厚い体調管理・食事サポートを担っていただいた保護者の皆様に心より厚く御礼申し上げます。\n\n⚾️ まずは一度、グラウンドへ！秋の体験練習受付中：${ENTRY_URL}`
+              : `☀️【夏合宿！全員で乗り越えた絆の夏】🔥\n${weatherIntro}猛暑に負けず、夏季強化合宿を無事に走り切りました！⚾️\n\n朝のランニングから日が暮れるまでの徹底ノック、夜のミーティングやみんなで囲む大盛りごはん🍚✨\n${tagPhrase}苦しい時こそ仲間同士で声を掛け合い、限界をひとつ突破した選手たちの表情はたくましさそのものです！秋の大会へ弾みをつけます！💪\n\n⚾️ まずは一度、グラウンドへ！体験詳細はこちら：${ENTRY_URL}`
           );
         } else if (eventId === 'parents') {
           setCustomMemo(
             isFb
-              ? `【父母会・総会開催のご報告と感謝】\n\n${teamName}（NPO法人 越谷K・クラブ）の父母会・総会を開催いたしました。指導方針の共有やサポート体制について建設的な意見交換が行われ、指導者・保護者が「チームの両輪」となって選手たちの成長を支えていく体制を再確認いたしました。子どもたちの夢を共に支えてくださる保護者の皆様の献身的なご尽力に深く感謝申し上げます。\n\n⚾️ まずは一度、グラウンドへ！体験練習のご相談もお気軽にどうぞ。\n🔗 ${ENTRY_URL}`
-              : `🤝【選手たちの笑顔を支える強力な応援団！】✨\nいつも選手たちが思いきり白球を追えるよう、温かく見守り支えてくれる保護者の皆様、本当にありがとうございます！\n\n${teamName}では、保護者の当番負担を減らしながら、無理のない範囲で笑顔で協力し合う環境づくりを進めています😊 グラウンドに広がる温かい声援が選手たちの一番のエネルギーです！⚾️\n\n⚾️ まずは一度、グラウンドへ！詳細はこちら：${ENTRY_URL}`
+              ? `【父母会・総会開催のご報告と感謝】\n\n${weatherIntro}${teamName}（NPO法人 越谷K・クラブ）の父母会・総会を開催いたしました。指導方針の共有やサポート体制について建設的な意見交換が行われ、指導者・保護者が「チームの両輪」となって選手たちの成長を支えていく体制を再確認いたしました。子どもたちの夢を共に支えてくださる保護者の皆様の献身的なご尽力に深く感謝申し上げます。\n\n⚾️ まずは一度、グラウンドへ！体験練習のご相談もお気軽にどうぞ。\n🔗 ${ENTRY_URL}`
+              : `🤝【選手たちの笑顔を支える強力な応援団！】✨\n${weatherIntro}いつも選手たちが思いきり白球を追えるよう、温かく見守り支えてくれる保護者の皆様、本当にありがとうございます！\n\n${teamName}では、保護者の当番負担を減らしながら、無理のない範囲で笑顔で協力し合う環境づくりを進めています😊 ${tagPhrase}グラウンドに広がる温かい声援が選手たちの一番のエネルギーです！⚾️\n\n⚾️ まずは一度、グラウンドへ！詳細はこちら：${ENTRY_URL}`
           );
         } else if (eventId === 'sponsor') {
           setCustomMemo(
@@ -563,22 +780,22 @@
               : `⚾️【祝・創部30期！3,600名の絆と未来をつなぐオフィシャルスポンサー募集】✨\n\nいつも${teamName}を温かく応援していただき、ありがとうございます！\n\n越谷ボーイズ・越谷中央ボーイズ（NPO法人 越谷K・クラブ）は皆様の温かい支えを受け、今年【創部30期】を迎えました🎉\nこれまで送り出した卒団生は約900名。ご家族を合わせると【3,600名を超える大きな絆】が今も地域に広がっています🤝✨\n\n現在も約100名の選手たち、そして100名を超えるスタッフがグラウンドに集い、全員野球で白球を追っています！\n\n私たちが目指すのは、単なる勝ち負けだけではありません。野球を通じた「青少年の健全育成」。大きな声での挨拶、道具を磨く姿、仲間への感謝など、社会に出てからも胸を張って生き抜く「人間力」を育てることです。\n\n100名の仲間たちが安全に遠征へ向かう「クラブバスの維持」、安全な「ボールや練習環境の確保」など、子どもたちの夢を地域みんなで支えるサポーター企業様・個人様を募集いたします！\n\n詳しいサポート内容やお問い合わせにつきましては、プロフィールのリンク（公式HP）よりご覧いただけます👇\n🔗 @koshigaya_boys\n（公式理念ページ：${ABOUT_URL}）`
           );
         }
-      }, [eventId, format, teamKey, number, nameJa, nameEn, grade, position, handedness, originTeam, playerMessage, tournamentName, stadiumName, opponentName, myScore, opponentScore, matchMood, matchHighlight]);
+      }, [eventId, format, teamKey, weatherId, selectedTags, cardTheme, number, nameJa, nameEn, grade, position, handedness, originTeam, playerMessage, tournamentName, stadiumName, opponentName, myScore, opponentScore, matchMood, matchHighlight]);
 
-      // 写真ファイル選択
       const handlePhotoSelect = (e) => {
         const file = e.target.files && e.target.files[0];
         if (file) {
           const reader = new FileReader();
           reader.onload = (event) => {
             setUploadedImgUrl(event.target.result);
-            showToast('✓ 写真を読み込みました！カードが完成しました');
+            setImgScale(100);
+            setImgOffsetY(0);
+            showToast('✓ 写真を読み込みました！下のスライダーで位置を調整できます');
           };
           reader.readAsDataURL(file);
         }
       };
 
-      // カード保存
       const downloadCard = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -599,7 +816,6 @@
         }
       };
 
-      // 目的・締めくくり文言（チーム名連動）
       const buildCtaText = (isFb) => {
         const ctaMap = {
           experience: {
@@ -624,7 +840,6 @@
         return isFb ? target.fb : target.insta;
       };
 
-      // 本文構築
       const buildOutput = () => {
         const isFb = format === 'facebook';
         const isReel = format === 'insta_reel';
@@ -691,11 +906,16 @@
       };
 
       const handleConfirmReset = () => {
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+        } catch (e) {}
         setTeamKey('koshigaya');
         setEventId('tournament');
         setFormat('insta_feed');
         setPurpose('experience');
-        setCardTheme('gold');
+        setWeatherId('sunny');
+        setSelectedTags(['run', 'voice']);
+        setCardTheme('holo');
         setNumber('10');
         setNameJa('佐藤 颯太');
         setNameEn('SOUTA SATO');
@@ -704,6 +924,8 @@
         setGrade('中学2年');
         setOriginTeam('越谷ライオンズ出身');
         setPlayerMessage('僕も小6の秋は硬式球にドキドキしたけど、先輩たちが優しく教えてくれてすぐ慣れました！まずは気軽にキャッチボールしに来てください！');
+        setImgScale(100);
+        setImgOffsetY(0);
         setTournamentName('第〇回 日本少年野球 支部予選');
         setStadiumName('越谷市民球場');
         setOpponentName('草加ボーイズ');
@@ -747,40 +969,38 @@
                 <h3 className="text-lg font-black text-stone-800 mb-1">
                   コピーできました！
                 </h3>
-                <p className="text-xs text-stone-600 mb-5 leading-relaxed">
+                <p className="text-xs text-stone-600 mb-4 leading-relaxed">
                   文章は記憶されています。<br />
-                  アプリを開いて「貼り付け（ペースト）」するだけです！
+                  投稿したいアプリを開いて「貼り付け（ペースト）」するだけです！
                 </p>
 
                 <div className="space-y-2.5">
-                  {format === 'facebook' ? (
-                    <a
-                      href="https://www.facebook.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setShowPostCopyModal(false)}
-                      className="w-full py-3.5 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm sm:text-base shadow-lg active:scale-95 transition flex items-center justify-center gap-2"
-                    >
-                      <span className="text-xl">📘</span>
-                      <span>Facebookを開いて貼り付ける</span>
-                    </a>
-                  ) : (
-                    <a
-                      href="https://www.instagram.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setShowPostCopyModal(false)}
-                      className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white font-black text-sm sm:text-base shadow-lg active:scale-95 transition flex items-center justify-center gap-2"
-                    >
-                      <span className="text-xl">📸</span>
-                      <span>Instagramを開いて貼り付ける</span>
-                    </a>
-                  )}
+                  <a
+                    href="https://www.instagram.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setShowPostCopyModal(false)}
+                    className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white font-black text-sm sm:text-base shadow-lg active:scale-95 transition flex items-center justify-center gap-2"
+                  >
+                    <span className="text-xl">📸</span>
+                    <span>Instagramを開いて貼り付ける</span>
+                  </a>
+
+                  <a
+                    href="https://www.facebook.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setShowPostCopyModal(false)}
+                    className="w-full py-3.5 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm sm:text-base shadow-lg active:scale-95 transition flex items-center justify-center gap-2"
+                  >
+                    <span className="text-xl">📘</span>
+                    <span>Facebookを開いて貼り付ける</span>
+                  </a>
 
                   <button
                     type="button"
                     onClick={scrollToTop}
-                    className="w-full py-3 px-4 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 px-4 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 mt-2"
                   >
                     <span>⬆️</span>
                     <span>続けて別の投稿を作る（一番上へ戻る）</span>
@@ -798,7 +1018,7 @@
                   <span className="text-4xl block mb-2">🔄</span>
                   <h3 className="text-lg font-black text-stone-800">最初に戻しますか？</h3>
                   <p className="text-sm text-stone-600 mt-1 leading-relaxed">
-                    現在入力されているお名前や文章が最初の見本に戻ります。
+                    現在入力されているお名前や文章が最初の見本に戻ります。（自動記憶もリセットされます）
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -821,11 +1041,12 @@
             </div>
           )}
 
-          {/* ヘッダーカード（GitHubの team-logo.png を最優先表示） */}
+          {/* ヘッダーカード */}
           <header className="bg-cardMain text-cardSub rounded-3xl shadow-md p-4 sm:p-5 mb-3 border-b-4 border-[#8B3738] relative overflow-hidden">
             <div className="flex items-center justify-between gap-2 mb-3">
-              <span className="bg-cardSub text-cardMain text-xs font-black px-3 py-1 rounded-full shadow-inner tracking-wider">
-                考えるを、ひとりにしない。
+              <span className="bg-cardSub text-cardMain text-xs font-black px-3 py-1 rounded-full shadow-inner tracking-wider flex items-center gap-1">
+                <span>💾</span>
+                <span>自動保存中（スマホ閉じても消えません）</span>
               </span>
               <button
                 type="button"
@@ -868,7 +1089,7 @@
             </div>
           </header>
 
-          {/* チーム選択（スマホでも絶対に文字が被らない2段レイアウト） */}
+          {/* チーム選択 */}
           <div className="bg-white rounded-3xl p-3 sm:p-4 border-2 border-cardMain/40 shadow-sm mb-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xl">🧢</span>
@@ -892,7 +1113,7 @@
             </div>
           </div>
 
-          {/* 父母さんのための 使い方ガイド（アコーディオン） */}
+          {/* 父母さんのための 使い方ガイド */}
           <div className="mb-4">
             <button
               type="button"
@@ -934,8 +1155,8 @@
                   </h3>
                   <ol className="space-y-1.5 text-stone-700 leading-relaxed text-xs sm:text-sm list-decimal list-inside">
                     <li><strong>チームと行事を選ぶ：</strong>「越谷ボーイズ / 越谷中央ボーイズ」を選び、今日の出来事をタップ。</li>
-                    <li><strong>写真やメモを確認：</strong>選手カードを作るときは写真を選んで「カード画像を保存」を押すだけ！</li>
-                    <li><strong>画面下の「本文をコピー」：</strong>Instagramにそのまま貼り付け（ペースト）して投稿完了です。</li>
+                    <li><strong>写真やメモを確認：</strong>天気や名場面タグを選ぶと、文章が自動で生き生きと仕上がります！</li>
+                    <li><strong>画面下の「本文をコピー」：</strong>InstagramまたはFacebookにそのまま貼り付け（ペースト）して投稿完了です。</li>
                   </ol>
                 </div>
               </div>
@@ -991,6 +1212,84 @@
             </div>
           </section>
 
+          {/* ①「天気・グラウンド状況」ワンタップピッカー */}
+          <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-stone-200 mb-4">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">☀️</span>
+                <h3 className="font-black text-stone-800 text-sm sm:text-base">
+                  今日の天気・グラウンド状況
+                </h3>
+              </div>
+              <span className="text-[11px] text-stone-500 font-bold bg-stone-100 px-2 py-0.5 rounded-full">
+                冒頭に情景が合流
+              </span>
+            </div>
+            <p className="text-xs text-stone-500 mb-3">
+              タップするだけで、臨場感のある挨拶・書き出しが1秒で完成します
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {WEATHER_OPTIONS.map(w => {
+                const isSel = weatherId === w.id;
+                return (
+                  <button
+                    key={w.id}
+                    type="button"
+                    onClick={() => setWeatherId(w.id)}
+                    className={`py-2 px-3 rounded-xl border-2 text-xs sm:text-sm font-bold transition-all text-left flex items-center justify-between active:scale-95 ${
+                      isSel
+                        ? 'border-cardMain bg-cardSub/40 text-cardMain shadow-sm ring-1 ring-cardMain'
+                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span>{w.label}</span>
+                    {isSel && <span className="text-cardMain text-xs font-black">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* ③「今日の名場面・感情タグ」ピッカー */}
+          <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-stone-200 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🏷️</span>
+                <h3 className="font-black text-stone-800 text-sm sm:text-base">
+                  今日の子どもたちのナイスプレー（複数選べます）
+                </h3>
+              </div>
+              <span className="text-[11px] text-stone-500 font-bold bg-stone-100 px-2 py-0.5 rounded-full">
+                親指で選ぶだけ
+              </span>
+            </div>
+            <p className="text-xs text-stone-500 mb-3">
+              当てはまるものをタップすると、文章の中に自然に熱いシーンが組み上がります
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              {EMOTION_TAGS.map(tag => {
+                const isChecked = selectedTags.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => toggleEmotionTag(tag.id)}
+                    className={`py-2 px-3 rounded-full border-2 text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1.5 ${
+                      isChecked
+                        ? 'border-cardMain bg-cardMain text-white shadow-md'
+                        : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span>{tag.label}</span>
+                    {isChecked && <span className="text-xs bg-white/20 rounded-full px-1">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
           {/* 選手カードメーカー */}
           {eventId === 'player' && (
             <section className="bg-white rounded-3xl p-4 sm:p-5 shadow-md border-2 border-cardMain mb-4 fade-in">
@@ -1007,7 +1306,7 @@
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-stone-600 mt-1">
-                  写真を選ぶだけで本格カードが完成！お好みのカラーデザインも選べます
+                  写真を選ぶだけで本格カードが完成！傾けたりなぞると虹色にキラキラ輝きます✨
                 </p>
               </div>
 
@@ -1015,9 +1314,23 @@
               <div className="mb-4">
                 <label className="block text-xs sm:text-sm font-black text-stone-800 mb-2 flex items-center gap-1.5">
                   <span>🎨</span>
-                  <span>カードのカラーデザインを選ぶ（ワンタップで着せ替え）</span>
+                  <span>カードの着せ替えエフェクトを選ぶ（ワンタップ）</span>
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCardTheme('holo')}
+                    className={`py-2.5 px-2 rounded-2xl border-2 font-black text-xs sm:text-sm flex flex-col items-center gap-1 transition-all active:scale-95 relative overflow-hidden ${
+                      cardTheme === 'holo'
+                        ? 'border-fuchsia-500 bg-gradient-to-br from-fuchsia-100 via-cyan-100 to-amber-100 text-purple-950 ring-2 ring-fuchsia-400 shadow-md'
+                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span className="text-lg">🌈</span>
+                    <span>虹色ホログラム</span>
+                    <span className="text-[10px] text-fuchsia-700 font-bold">✨ キラカード仕様</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setCardTheme('gold')}
@@ -1064,15 +1377,86 @@
 
               {/* カード完成プレビュー */}
               <div className="flex flex-col items-center mb-4">
-                <div className="w-full max-w-[290px] sm:max-w-[320px] rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-stone-900 aspect-[2/3] relative">
+                <div
+                  onMouseMove={handleCardMove}
+                  onTouchMove={handleCardMove}
+                  className={`w-full max-w-[290px] sm:max-w-[320px] rounded-2xl overflow-hidden shadow-2xl border-4 ${
+                    cardTheme === 'holo' ? 'border-amber-300 ring-4 ring-fuchsia-400/40' : 'border-white'
+                  } bg-stone-900 aspect-[2/3] relative cursor-pointer ${cardTheme === 'holo' ? 'holo-active' : ''}`}
+                >
                   <canvas ref={canvasRef} className="w-full h-full object-contain block" />
+
+                  {cardTheme === 'holo' && (
+                    <>
+                      <div
+                        className="holo-sheen holo-auto-sheen"
+                        style={{
+                          backgroundPosition: `${holoPos.x}% ${holoPos.y}%`
+                        }}
+                      />
+                      <div className="holo-sparkle" />
+                    </>
+                  )}
+                </div>
+
+                {cardTheme === 'holo' && (
+                  <p className="text-[11px] text-fuchsia-700 font-bold mt-2 flex items-center gap-1">
+                    <span>✨</span>
+                    <span>スマホを傾けるか、カードの上を指でなぞると虹色に輝きます！</span>
+                  </p>
+                )}
+
+                {/* ④ 写真の拡大・上下移動スライダー */}
+                <div className="w-full max-w-[320px] mt-3.5 bg-stone-100 p-3.5 rounded-2xl border border-stone-300 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs font-black text-stone-700">
+                    <span className="flex items-center gap-1">
+                      <span>🔍</span>
+                      <span>写真の大きさ（ズーム）: {imgScale}%</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => { setImgScale(100); setImgOffsetY(0); }}
+                      className="text-[10px] bg-stone-200 hover:bg-stone-300 px-2 py-0.5 rounded text-stone-600"
+                    >
+                      リセット
+                    </button>
+                  </div>
+                  <input
+                    type="range"
+                    min="80"
+                    max="180"
+                    value={imgScale}
+                    onChange={(e) => setImgScale(Number(e.target.value))}
+                    className="w-full accent-cardMain cursor-pointer"
+                  />
+
+                  <div className="flex items-center justify-between text-xs font-black text-stone-700 pt-1">
+                    <span className="flex items-center gap-1">
+                      <span>↕️</span>
+                      <span>写真の上下位置調整</span>
+                    </span>
+                    <span className="text-[11px] text-stone-500 font-mono">
+                      {imgOffsetY > 0 ? `+${imgOffsetY}` : imgOffsetY}px
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-150"
+                    max="150"
+                    value={imgOffsetY}
+                    onChange={(e) => setImgOffsetY(Number(e.target.value))}
+                    className="w-full accent-cardMain cursor-pointer"
+                  />
+                  <p className="text-[10px] text-stone-500 text-center">
+                    ※スライダーを動かすと写真の位置がリアルタイムに整います
+                  </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={downloadCard}
                   disabled={isCardSaving}
-                  className="w-full max-w-[320px] mt-3.5 py-3.5 px-4 bg-gradient-to-r from-cardMain to-[#851E20] text-cardSub font-black rounded-2xl text-sm sm:text-base shadow-lg hover:opacity-95 active:scale-95 transition flex items-center justify-center gap-2 border border-white/30"
+                  className="w-full max-w-[320px] mt-3 py-3.5 px-4 bg-gradient-to-r from-cardMain to-[#851E20] text-cardSub font-black rounded-2xl text-sm sm:text-base shadow-lg hover:opacity-95 active:scale-95 transition flex items-center justify-center gap-2 border border-white/30"
                 >
                   <span className="text-lg">💾</span>
                   <span>{teamName}の選手カードを保存する</span>
@@ -1093,7 +1477,7 @@
                   <label className="flex flex-col items-center justify-center border-2 border-dashed border-cardMain/60 bg-white rounded-2xl p-4 cursor-pointer hover:bg-cardSub/20 transition active:scale-[0.99]">
                     <span className="text-2xl mb-1">📁</span>
                     <span className="text-sm font-bold text-cardMain">ここをタップして写真を選ぶ</span>
-                    <span className="text-xs text-stone-500 mt-0.5">バッティングや投球などの縦向き写真がキレイに収まります</span>
+                    <span className="text-xs text-stone-500 mt-0.5">写真を選んだら上のスライダーで位置を合わせてください</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1316,7 +1700,6 @@
                   </label>
                   
                   <div className="flex items-center justify-between gap-2">
-                    {/* 自チーム：プルダウン選択式 */}
                     <div className="flex-1 text-center">
                       <div className="mb-1">
                         <div className="relative inline-block w-full">
@@ -1348,7 +1731,6 @@
                       ー
                     </div>
 
-                    {/* 対戦相手チーム */}
                     <div className="flex-1 text-center">
                       <div className="mb-1">
                         <input
@@ -1467,7 +1849,7 @@
                     本文の確認・編集
                   </h2>
                   <p className="text-xs text-stone-500">
-                    このままでもOK、気になる言葉は自由に書き直せます
+                    天気やタグが自動合流しています。気になる言葉は自由に書き直せます
                   </p>
                 </div>
               </div>
@@ -1666,7 +2048,6 @@
                 越谷ボーイズ／越谷中央ボーイズでは、青少年の健全育成を共に歩んでくださる地域企業様・個人サポーター様を広く募っております。本アプリへのバナー掲載やHPリンク等、地域ファミリー層へ好感度高く貴社をお届けします。
               </p>
 
-              {/* 枠（プレースホルダー）＋公式HP案内ボタン */}
               <div className="mt-3 pt-3 border-t border-amber-200/80 flex flex-col sm:flex-row items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <div className="w-10 h-10 rounded-xl border-2 border-dashed border-amber-400/80 bg-white/80 flex items-center justify-center shrink-0 text-amber-700 font-black text-xs shadow-inner">
@@ -1690,61 +2071,92 @@
               </div>
             </div>
 
-            {/* 2. 現在のOFFICIAL PARTNER表示 */}
-            <div>
+            {/* 2. OFFICIAL PARTNER 実例サンプル紹介エリア */}
+            <div className="pt-1">
+              
+              {/* 「協賛するとこうなります」実例サンプルのガイド見出し */}
               <div className="text-center mb-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-full text-xs font-black tracking-wide">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-900 border border-amber-300 rounded-full text-xs font-black tracking-wide shadow-sm mb-1.5">
                   <span>🤝</span>
                   <span>OFFICIAL PARTNER</span>
-                </span>
-                <p className="text-xs text-stone-600 font-bold mt-2 leading-relaxed">
+                </div>
+                
+                {/* 企業向け：こうなりますという解説タグ */}
+                <div className="inline-block bg-blue-50 text-blue-800 border border-blue-200 text-[11px] font-bold px-3 py-0.5 rounded-full shadow-inner mb-2">
+                  💡【掲載実例】ご協賛企業様はこのようにアプリ最下部に掲載されます
+                </div>
+
+                <p className="text-xs text-stone-600 font-bold leading-relaxed">
                   本アプリおよび越谷ボーイズ・越谷中央ボーイズの挑戦は、<br />
                   青少年の夢を育む地域サポーター企業様のご協力により運営されています。
                 </p>
               </div>
 
-              {/* スポンサーバナーカード（タップで企業サイトへ） */}
-              <a
-                href={SPC_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group block bg-[#FAF7F5] hover:bg-white rounded-2xl p-3.5 sm:p-4 border border-stone-200 hover:border-blue-500 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl p-2 shadow-sm border border-stone-200 flex items-center justify-center shrink-0 overflow-hidden">
-                    <img
-                      src={PRIMARY_SPC_LOGO}
-                      onError={(e) => {
-                        if (e.target.src !== FALLBACK_SPC_LOGO) {
-                          e.target.src = FALLBACK_SPC_LOGO;
-                        }
-                      }}
-                      alt="スマイルプラスコンサルティング ロゴ"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-[10px] sm:text-xs font-black text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
-                        オフィシャル協賛
-                      </span>
-                      <span className="text-xs text-stone-400 group-hover:text-blue-600 transition">
-                        公式サイト ↗
-                      </span>
-                    </div>
-                    <h3 className="font-black text-stone-900 text-sm sm:text-base leading-tight group-hover:text-blue-800 transition">
-                      スマイルプラスコンサルティング
-                    </h3>
-                    <p className="text-[11px] sm:text-xs text-stone-500 mt-1 leading-snug line-clamp-2">
-                      地域社会と子どもの笑顔をつなぐ。越谷ボーイズ／越谷中央ボーイズの選手たちを温かくサポートしています。
-                    </p>
-                    <p className="text-[10px] text-stone-400 mt-1 font-mono truncate">
-                      smileplusctg.com
-                    </p>
-                  </div>
+              {/* スポンサーバナーカード（掲載実例サンプル） */}
+              <div className="relative group">
+                {/* 上部ガイドラベル */}
+                <div className="flex items-center justify-between text-[11px] text-stone-500 font-bold px-2 mb-1.5">
+                  <span className="flex items-center gap-1 text-blue-700">
+                    <span>📱</span>
+                    <span>掲載イメージ例（タップで公式サイトへジャンプ）</span>
+                  </span>
+                  <span className="text-[10px] bg-stone-200/80 text-stone-600 px-2 py-0.5 rounded-md">
+                    オフィシャル協賛枠
+                  </span>
                 </div>
-              </a>
+
+                <a
+                  href={SPC_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block bg-[#FAF7F5] hover:bg-white rounded-2xl p-3.5 sm:p-4 border-2 border-stone-200 hover:border-blue-500 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl p-2 shadow-sm border border-stone-200 flex items-center justify-center shrink-0 overflow-hidden">
+                      <img
+                        src={PRIMARY_SPC_LOGO}
+                        onError={(e) => {
+                          if (e.target.src !== FALLBACK_SPC_LOGO) {
+                            e.target.src = FALLBACK_SPC_LOGO;
+                          }
+                        }}
+                        alt="スマイルプラスコンサルティング ロゴ"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-[10px] sm:text-xs font-black text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                          オフィシャル協賛
+                        </span>
+                        <span className="text-xs text-stone-400 group-hover:text-blue-600 transition">
+                          公式サイト ↗
+                        </span>
+                      </div>
+                      <h3 className="font-black text-stone-900 text-sm sm:text-base leading-tight group-hover:text-blue-800 transition">
+                        スマイルプラスコンサルティング
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-stone-500 mt-1 leading-snug line-clamp-2">
+                        地域社会と子どもの笑顔をつなぐ。越谷ボーイズ／越谷中央ボーイズの選手たちを温かくサポートしています。
+                      </p>
+                      <p className="text-[10px] text-stone-400 mt-1 font-mono truncate">
+                        smileplusctg.com
+                      </p>
+                    </div>
+                  </div>
+                </a>
+
+                {/* 企業向けメリットの補足バッジ */}
+                <div className="mt-2 flex items-center justify-center gap-2 text-[10px] text-stone-500">
+                  <span className="flex items-center gap-0.5">✓ 貴社ロゴ</span>
+                  <span className="text-stone-300">•</span>
+                  <span className="flex items-center gap-0.5">✓ 応援メッセージ</span>
+                  <span className="text-stone-300">•</span>
+                  <span className="flex items-center gap-0.5">✓ 自社HP・SNSリンク</span>
+                </div>
+              </div>
+
             </div>
 
           </aside>
